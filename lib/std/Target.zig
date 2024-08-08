@@ -480,7 +480,21 @@ pub const Os = struct {
                 .linux => .{
                     .linux = .{
                         .range = .{
-                            .min = .{ .major = 4, .minor = 19, .patch = 0 },
+                            .min = blk: {
+                                const default_min = .{ .major = 4, .minor = 19, .patch = 0 };
+
+                                for (std.zig.target.available_libcs) |libc| {
+                                    // TODO: We don't know the ABI here and we do need it for e.g.
+                                    // x86_64-x32 and mips64-gnuabin32.
+                                    if (libc.os != tag or libc.arch != arch) continue;
+
+                                    if (libc.os_ver) |min| {
+                                        if (min.order(default_min) == .gt) break :blk min;
+                                    }
+                                }
+
+                                break :blk default_min;
+                            },
                             .max = .{ .major = 6, .minor = 5, .patch = 7 },
                         },
                         .glibc = blk: {
