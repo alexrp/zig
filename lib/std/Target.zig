@@ -128,10 +128,10 @@ pub const Os = struct {
             return tag == .linux and abi.isGnu();
         }
 
-        pub fn defaultVersionRange(tag: Tag, arch: Cpu.Arch) Os {
+        pub fn defaultVersionRange(tag: Tag, arch: Cpu.Arch, abi: Abi) Os {
             return .{
                 .tag = tag,
-                .version_range = VersionRange.default(tag, arch),
+                .version_range = VersionRange.default(arch, tag, abi),
             };
         }
 
@@ -366,8 +366,8 @@ pub const Os = struct {
 
         /// The default `VersionRange` represents the range that the Zig Standard Library
         /// bases its abstractions on.
-        pub fn default(tag: Tag, arch: Cpu.Arch) VersionRange {
-            return switch (tag) {
+        pub fn default(arch: Cpu.Arch, os: Tag, abi: Abi) VersionRange {
+            return switch (os) {
                 .freestanding,
                 .fuchsia,
                 .ps3,
@@ -484,9 +484,7 @@ pub const Os = struct {
                                 const default_min = .{ .major = 4, .minor = 19, .patch = 0 };
 
                                 for (std.zig.target.available_libcs) |libc| {
-                                    // TODO: We don't know the ABI here and we do need it for e.g.
-                                    // x86_64-x32 and mips64-gnuabin32.
-                                    if (libc.os != tag or libc.arch != arch) continue;
+                                    if (libc.os != os or libc.arch != arch or libc.abi != abi) continue;
 
                                     if (libc.os_ver) |min| {
                                         if (min.order(default_min) == .gt) break :blk min;
@@ -501,9 +499,7 @@ pub const Os = struct {
                             const default_min = .{ .major = 2, .minor = 28, .patch = 0 };
 
                             for (std.zig.target.available_libcs) |libc| {
-                                // We don't know the ABI here. We can get away with not checking it
-                                // for now, but that may not always remain true.
-                                if (libc.os != tag or libc.arch != arch) continue;
+                                if (libc.os != os or libc.arch != arch or libc.abi != abi) continue;
 
                                 if (libc.glibc_min) |min| {
                                     if (min.order(default_min) == .gt) break :blk min;

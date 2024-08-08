@@ -164,7 +164,10 @@ pub const DetectError = error{
 /// standard/default parts relative to that.
 pub fn resolveTargetQuery(query: Target.Query) DetectError!Target {
     const query_os_tag = query.os_tag orelse builtin.os.tag;
-    var os = query_os_tag.defaultVersionRange(query.cpu_arch orelse builtin.cpu.arch);
+    var os = query_os_tag.defaultVersionRange(
+        query.cpu_arch orelse builtin.cpu.arch,
+        query.abi orelse builtin.abi,
+    );
     if (query.os_tag == null) {
         switch (builtin.target.os.tag) {
             .linux => {
