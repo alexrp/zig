@@ -3412,21 +3412,32 @@ fn buildOutputType(
 
             for (std.zig.target.available_libcs) |t| {
                 if (t.arch == target.cpu.arch and t.os == target.os.tag) {
-                    if (t.os_ver) |os_ver| {
-                        std.log.info("zig can provide libc for related target {s}-{s}.{d}-{s}", .{
-                            @tagName(t.arch), @tagName(t.os), os_ver.major, @tagName(t.abi),
-                        });
-                    } else if (t.glibc_min) |glibc_min| {
-                        std.log.info("zig can provide libc for related target {s}-{s}-{s}.{d}.{d}", .{
+                    // If there's a `glibc_min`, there's also an `os_ver`.
+                    if (t.glibc_min) |glibc_min| {
+                        std.log.info("zig can provide libc for related target {s}-{s}.{d}.{d}.{d}-{s}.{d}.{d}", .{
                             @tagName(t.arch),
                             @tagName(t.os),
+                            t.os_ver.?.major,
+                            t.os_ver.?.minor,
+                            t.os_ver.?.patch,
                             @tagName(t.abi),
                             glibc_min.major,
                             glibc_min.minor,
                         });
+                    } else if (t.os_ver) |os_ver| {
+                        std.log.info("zig can provide libc for related target {s}-{s}.{d}.{d}.{d}-{s}", .{
+                            @tagName(t.arch),
+                            @tagName(t.os),
+                            os_ver.major,
+                            os_ver.minor,
+                            os_ver.patch,
+                            @tagName(t.abi),
+                        });
                     } else {
                         std.log.info("zig can provide libc for related target {s}-{s}-{s}", .{
-                            @tagName(t.arch), @tagName(t.os), @tagName(t.abi),
+                            @tagName(t.arch),
+                            @tagName(t.os),
+                            @tagName(t.abi),
                         });
                     }
                 }
