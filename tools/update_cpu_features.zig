@@ -57,13 +57,13 @@ const llvm_targets = [_]LlvmTarget{
                 .omit = true,
             },
             .{
-                .llvm_name = "v8a",
-                .extra_deps = &.{ "fp_armv8", "neon" },
-            },
-            .{
                 .llvm_name = "CONTEXTIDREL2",
                 .zig_name = "contextidr_el2",
                 .desc = "Enable RW operand Context ID Register (EL2)",
+            },
+            .{
+                .llvm_name = "v8a",
+                .extra_deps = &.{"neon"},
             },
             .{
                 .llvm_name = "neoversee1",
@@ -78,6 +78,10 @@ const llvm_targets = [_]LlvmTarget{
                 .flatten = true,
             },
             .{
+                .llvm_name = "neoversen3",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "neoversev1",
                 .flatten = true,
             },
@@ -86,31 +90,36 @@ const llvm_targets = [_]LlvmTarget{
                 .flatten = true,
             },
             .{
+                .llvm_name = "neoversev3",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "neoversev3AE",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "neoverse512tvb",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "oryon-1",
                 .flatten = true,
             },
             .{
                 .llvm_name = "exynosm3",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "exynosm4",
                 .flatten = true,
             },
             .{
-                .llvm_name = "v8.1a",
-                .extra_deps = &.{"v8a"},
-            },
-            .{
                 .llvm_name = "a35",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "a53",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "a55",
@@ -119,24 +128,41 @@ const llvm_targets = [_]LlvmTarget{
             .{
                 .llvm_name = "a57",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
+            },
+            .{
+                .llvm_name = "a510",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a520",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a520ae",
+                .flatten = true,
             },
             .{
                 .llvm_name = "a64fx",
                 .flatten = true,
             },
             .{
+                .llvm_name = "a65",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "a72",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "a73",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "a75",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a76",
                 .flatten = true,
             },
             .{
@@ -144,7 +170,31 @@ const llvm_targets = [_]LlvmTarget{
                 .flatten = true,
             },
             .{
+                .llvm_name = "a78",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a78ae",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a78c",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a710",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "a715",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a720",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a720ae",
                 .flatten = true,
             },
             .{
@@ -192,11 +242,27 @@ const llvm_targets = [_]LlvmTarget{
                 .flatten = true,
             },
             .{
+                .llvm_name = "apple-m4",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "carmel",
                 .flatten = true,
             },
             .{
+                .llvm_name = "cortex-a725",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "cortex-a78",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "cortex-r82",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "cortex-r82ae",
                 .flatten = true,
             },
             .{
@@ -216,14 +282,16 @@ const llvm_targets = [_]LlvmTarget{
                 .flatten = true,
             },
             .{
+                .llvm_name = "cortex-x925",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "falkor",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "kryo",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "saphira",
@@ -232,7 +300,6 @@ const llvm_targets = [_]LlvmTarget{
             .{
                 .llvm_name = "thunderx",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "thunderx2t99",
@@ -245,17 +312,14 @@ const llvm_targets = [_]LlvmTarget{
             .{
                 .llvm_name = "thunderxt81",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "thunderxt83",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "thunderxt88",
                 .flatten = true,
-                .extra_deps = &.{"v8a"},
             },
             .{
                 .llvm_name = "tsv110",
@@ -308,8 +372,6 @@ const llvm_targets = [_]LlvmTarget{
                 .llvm_name = null,
                 .zig_name = "xgene1",
                 .features = &.{
-                    "fp_armv8",
-                    "neon",
                     "perfmon",
                     "v8a",
                 },
@@ -320,8 +382,6 @@ const llvm_targets = [_]LlvmTarget{
                 .features = &.{
                     "crc",
                     "crypto",
-                    "fp_armv8",
-                    "neon",
                     "perfmon",
                     "v8a",
                 },
@@ -384,7 +444,15 @@ const llvm_targets = [_]LlvmTarget{
         },
         .feature_overrides = &.{
             .{
+                .llvm_name = "exynos",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "cortex-a78",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "cortex-a78ae",
                 .flatten = true,
             },
             .{
@@ -421,6 +489,14 @@ const llvm_targets = [_]LlvmTarget{
                 .flatten = true,
             },
             .{
+                .llvm_name = "r4",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "r52plus",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "r5",
                 .flatten = true,
             },
@@ -433,6 +509,10 @@ const llvm_targets = [_]LlvmTarget{
                 .flatten = true,
             },
             .{
+                .llvm_name = "m3",
+                .flatten = true,
+            },
+            .{
                 .llvm_name = "m7",
                 .flatten = true,
             },
@@ -442,6 +522,10 @@ const llvm_targets = [_]LlvmTarget{
             },
             .{
                 .llvm_name = "kryo",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "swift",
                 .flatten = true,
             },
             .{
@@ -510,6 +594,10 @@ const llvm_targets = [_]LlvmTarget{
             },
             .{
                 .llvm_name = "a75",
+                .flatten = true,
+            },
+            .{
+                .llvm_name = "a76",
                 .flatten = true,
             },
             .{
@@ -903,6 +991,7 @@ const llvm_targets = [_]LlvmTarget{
         .zig_name = "riscv",
         .llvm_name = "RISCV",
         .td_name = "RISCV.td",
+        .branch_quota = 2000,
         .feature_overrides = &.{
             .{
                 .llvm_name = "sifive7",
@@ -913,12 +1002,12 @@ const llvm_targets = [_]LlvmTarget{
             .{
                 .llvm_name = null,
                 .zig_name = "baseline_rv32",
-                .features = &.{ "32bit", "a", "c", "d", "f", "m" },
+                .features = &.{ "32bit", "a", "c", "d", "f", "i", "m" },
             },
             .{
                 .llvm_name = null,
                 .zig_name = "baseline_rv64",
-                .features = &.{ "64bit", "a", "c", "d", "f", "m" },
+                .features = &.{ "64bit", "a", "c", "d", "f", "i", "m" },
             },
         },
     },
@@ -958,8 +1047,128 @@ const llvm_targets = [_]LlvmTarget{
                 .omit = true,
             },
             .{
+                .llvm_name = "amdfam10",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon64",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon64-sse3",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon-4",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon-fx",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon-mp",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon-tbird",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "athlon-xp",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "barcelona",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "c3",
+                .extra_deps = &.{"3dnow"},
+            },
+            .{
+                .llvm_name = "geode",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "k6-2",
+                .extra_deps = &.{"3dnow"},
+            },
+            .{
+                .llvm_name = "k6-3",
+                .extra_deps = &.{"3dnow"},
+            },
+            .{
+                .llvm_name = "k8",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "k8-sse3",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "knl",
+                .extra_deps = &.{
+                    "avx512er",
+                    "avx512pf",
+                    "prefetchwt1",
+                },
+            },
+            .{
+                .llvm_name = "knm",
+                .extra_deps = &.{
+                    "avx512er",
+                    "avx512pf",
+                    "prefetchwt1",
+                },
+            },
+            .{
                 .llvm_name = "lakemont",
                 .extra_deps = &.{"soft_float"},
+            },
+            .{
+                .llvm_name = "opteron",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "opteron-sse3",
+                .extra_deps = &.{"3dnowa"},
+            },
+            .{
+                .llvm_name = "winchip2",
+                .extra_deps = &.{"3dnow"},
+            },
+        },
+        // Features removed from LLVM
+        .extra_features = &.{
+            .{
+                .zig_name = "3dnow",
+                .desc = "Enable 3DNow! instructions",
+                .deps = &.{"mmx"},
+            },
+            .{
+                .zig_name = "3dnowa",
+                .desc = "Enable 3DNow! Athlon instructions",
+                .deps = &.{"3dnow"},
+            },
+            .{
+                .zig_name = "avx512er",
+                .desc = "Enable AVX-512 Exponential and Reciprocal Instructions",
+                .deps = &.{"avx512f"},
+            },
+            .{
+                .zig_name = "avx512pf",
+                .desc = "Enable AVX-512 PreFetch Instructions",
+                .deps = &.{"avx512f"},
+            },
+            .{
+                .zig_name = "prefetchwt1",
+                .desc = "Prefetch with Intent to Write and T1 Hint",
+                .deps = &.{},
             },
         },
         .omit_cpus = &.{
@@ -1111,7 +1320,7 @@ fn processOneTarget(job: Job) anyerror!void {
     const child_result = try std.process.Child.run(.{
         .allocator = arena,
         .argv = &child_args,
-        .max_output_bytes = 400 * 1024 * 1024,
+        .max_output_bytes = 500 * 1024 * 1024,
     });
     tblgen_progress.end();
     if (child_result.stderr.len != 0) {
