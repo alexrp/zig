@@ -2136,6 +2136,8 @@ void ZigClang_detect_enum_CallingConv(clang::CallingConv x) {
         case clang::CC_AArch64SVEPCS:
         case clang::CC_AMDGPUKernelCall:
         case clang::CC_M68kRTD:
+        case clang::CC_PreserveNone:
+        case clang::CC_RISCVVectorCall:
             break;
     }
 }
@@ -2162,6 +2164,8 @@ static_assert((clang::CallingConv)ZigClangCallingConv_AArch64VectorCall == clang
 static_assert((clang::CallingConv)ZigClangCallingConv_AArch64SVEPCS == clang::CC_AArch64SVEPCS, "");
 static_assert((clang::CallingConv)ZigClangCallingConv_AMDGPUKernelCall == clang::CC_AMDGPUKernelCall, "");
 static_assert((clang::CallingConv)ZigClangCallingConv_M68kRTD == clang::CC_M68kRTD, "");
+static_assert((clang::CallingConv)ZigClangCallingConv_PreserveNone == clang::CC_PreserveNone, "");
+static_assert((clang::CallingConv)ZigClangCallingConv_RISCVVectorCall == clang::CC_RISCVVectorCall, "");
 
 void ZigClang_detect_enum_StorageClass(clang::StorageClass x) {
     switch (x) {

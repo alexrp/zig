@@ -2126,6 +2126,8 @@ pub const CallingConv = enum(c_int) {
     AArch64SVEPCS,
     AMDGPUKernelCall,
     M68kRTD,
+    PreserveNone,
+    RISCVVectorCall,
 };
 
 pub const StorageClass = enum(c_int) {
