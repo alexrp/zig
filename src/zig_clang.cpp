@@ -208,6 +208,8 @@ void ZigClang_detect_enum_CK(clang::CastKind x) {
         case clang::CK_UserDefinedConversion:
         case clang::CK_VectorSplat:
         case clang::CK_ZeroToOCLOpaqueType:
+        case clang::CK_HLSLVectorTruncation:
+        case clang::CK_HLSLArrayRValue:
             break;
     }
 };
@@ -1607,6 +1609,7 @@ void ZigClang_detect_enum_BuiltinTypeKind(clang::BuiltinType::Kind x) {
         case clang::BuiltinType::IncompleteMatrixIdx:
         case clang::BuiltinType::OMPArrayShaping:
         case clang::BuiltinType::OMPIterator:
+        case clang::BuiltinType::ArraySection:
             break;
     }
 }
