@@ -4998,23 +4998,27 @@ fn transCC(
     source_loc: clang.SourceLocation,
 ) !CallingConvention {
     const clang_cc = fn_ty.getCallConv();
-    switch (clang_cc) {
-        .C => return CallingConvention.C,
-        .X86StdCall => return CallingConvention.Stdcall,
-        .X86FastCall => return CallingConvention.Fastcall,
-        .X86VectorCall, .AArch64VectorCall => return CallingConvention.Vectorcall,
-        .X86ThisCall => return CallingConvention.Thiscall,
-        .AAPCS => return CallingConvention.AAPCS,
-        .AAPCS_VFP => return CallingConvention.AAPCSVFP,
-        .X86_64SysV => return CallingConvention.SysV,
-        else => return fail(
+    return switch (clang_cc) {
+        .C => CallingConvention.C,
+        .X86StdCall => CallingConvention.Stdcall,
+        .X86FastCall => CallingConvention.Fastcall,
+        .X86ThisCall => CallingConvention.Thiscall,
+        .X86RegCall => CallingConvention.Regcall,
+        .X86VectorCall, .AArch64VectorCall => CallingConvention.Vectorcall,
+        .AArch64SVEPCS => CallingConvention.SVEVectorcall,
+        .AAPCS => CallingConvention.AAPCS,
+        .AAPCS_VFP => CallingConvention.AAPCSVFP,
+        .Win64 => CallingConvention.Win64,
+        .X86_64SysV => CallingConvention.SysV,
+        .M68kRTD => CallingConvention.M68kRTD,
+        else => fail(
             c,
             error.UnsupportedType,
             source_loc,
             "unsupported calling convention: {s}",
             .{@tagName(clang_cc)},
         ),
-    }
+    };
 }
 
 fn transFnProto(
