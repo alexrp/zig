@@ -2985,6 +2985,10 @@ pub const Object = struct {
 
         switch (fn_info.cc) {
             .Naked => try attributes.addFnAttr(.naked, &o.builder),
+            .Interrupt => try attributes.addFnAttr(.{ .string = .{
+                .kind = try o.builder.string("interrupt"),
+                .value = try o.builder.string(""),
+            } }, &o.builder),
             else => {},
         }
 
