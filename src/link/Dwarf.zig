@@ -3368,23 +3368,33 @@ fn updateType(
             if (loaded_enum.names.len > 0) try uleb128(diw, @intFromEnum(AbbrevCode.null));
         },
         .func_type => |func_type| {
+            const target = dwarf.bin_file.comp.root_mod.resolved_target.result;
             const is_nullary = func_type.param_types.len == 0 and !func_type.is_var_args;
             try wip_nav.abbrevCode(if (is_nullary) .nullary_func_type else .func_type);
             try wip_nav.strp(name);
             try diw.writeByte(@intFromEnum(@as(DW.CC, switch (func_type.cc) {
-                .Unspecified, .C => .normal,
-                .Naked, .Async, .Inline => .nocall,
-                .Interrupt, .Signal => .nocall,
+                .Unspecified, .C, .Naked => .normal,
+                .Async, .Inline => .nocall,
+                .Interrupt, .Signal, .Builtin => .normal,
                 .Stdcall => .BORLAND_stdcall,
-                .Fastcall => .BORLAND_fastcall,
-                .Vectorcall => .LLVM_vectorcall,
+                .Fastcall => .BORLAND_msfastcall,
                 .Thiscall => .BORLAND_thiscall,
+                .Regcall => .LLVM_X86RegCall,
+                .Vectorcall => switch (target.cpu.arch) {
+                    .aarch64, .aarch64_be => .LLVM_AAPCS, // WTF Clang?
+                    .x86, .x86_64 => .LLVM_vectorcall,
+                    .riscv32, .riscv64 => .LLVM_RISCVVectorCall,
+                    else => unreachable,
+                },
+                .SVEVectorcall => .LLVM_AAPCS, // WTF Clang?
                 .APCS => .nocall,
                 .AAPCS => .LLVM_AAPCS,
                 .AAPCSVFP => .LLVM_AAPCS_VFP,
                 .SysV => .LLVM_X86_64SysV,
                 .Win64 => .LLVM_Win64,
-                .Kernel, .Fragment, .Vertex => .nocall,
+                .M68kRTD => .LLVM_M68kRTD,
+                .Kernel => .LLVM_OpenCLKernel,
+                .Fragment, .Vertex => .nocall,
             })));
             try wip_nav.refType(Type.fromInterned(func_type.return_type));
             for (0..func_type.param_types.len) |param_index| {

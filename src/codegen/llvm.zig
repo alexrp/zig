@@ -2984,14 +2984,11 @@ pub const Object = struct {
         }
 
         switch (fn_info.cc) {
-            .Unspecified, .Inline => function_index.setCallConv(.fastcc, &o.builder),
             .Naked => try attributes.addFnAttr(.naked, &o.builder),
-            .Async => {
-                function_index.setCallConv(.fastcc, &o.builder);
-                @panic("TODO: LLVM backend lower async function");
-            },
-            else => function_index.setCallConv(toLlvmCallConv(fn_info.cc, target), &o.builder),
+            else => {},
         }
+
+        function_index.setCallConv(toLlvmCallConv(fn_info.cc, target), &o.builder);
 
         if (resolved.alignment != .none)
             function_index.setAlignment(resolved.alignment.toLlvm(), &o.builder);
@@ -11135,29 +11132,42 @@ fn toLlvmAtomicRmwBinOp(
 
 fn toLlvmCallConv(cc: std.builtin.CallingConvention, target: std.Target) Builder.CallConv {
     return switch (cc) {
-        .Unspecified, .Inline, .Async => .fastcc,
+        .Unspecified, .Inline => .fastcc,
+        .Async => @panic("TODO: LLVM backend lower async function"),
         .C, .Naked => .ccc,
-        .Stdcall => .x86_stdcallcc,
-        .Fastcall => .x86_fastcallcc,
-        .Vectorcall => return switch (target.cpu.arch) {
-            .x86, .x86_64 => .x86_vectorcallcc,
-            .aarch64, .aarch64_be => .aarch64_vector_pcs,
+        .Interrupt => switch (target.cpu.arch) {
+            .arm, .armeb, .thumb, .thumbeb => .ccc,
+            .avr => .avr_intrcc,
+            .m68k => .m68k_intrcc,
+            .mips, .mipsel, .mips64, .mips64el => .ccc,
+            .msp430 => .msp430_intrcc,
+            .x86, .x86_64 => .x86_intrcc,
             else => unreachable,
         },
-        .Thiscall => .x86_thiscallcc,
-        .APCS => .arm_apcscc,
-        .AAPCS => .arm_aapcscc,
-        .AAPCSVFP => .arm_aapcs_vfpcc,
-        .Interrupt => return switch (target.cpu.arch) {
-            .x86, .x86_64 => .x86_intrcc,
-            .avr => .avr_intrcc,
-            .msp430 => .msp430_intrcc,
+        .Builtin => switch (target.cpu.arch) {
+            .avr => .avr_builtincc,
+            .msp430 => .msp430_builtincc,
             else => unreachable,
         },
         .Signal => .avr_signalcc,
+        .Stdcall => .x86_stdcallcc,
+        .Fastcall => .x86_fastcallcc,
+        .Thiscall => .x86_thiscallcc,
+        .Regcall => .x86_regcallcc,
+        .Vectorcall => switch (target.cpu.arch) {
+            .aarch64, .aarch64_be => .aarch64_vector_pcs,
+            .riscv32, .riscv64 => .riscv_vector_cc,
+            .x86, .x86_64 => .x86_vectorcallcc,
+            else => unreachable,
+        },
+        .SVEVectorcall => .aarch64_sve_vector_pcs,
+        .APCS => .arm_apcscc,
+        .AAPCS => .arm_aapcscc,
+        .AAPCSVFP => .arm_aapcs_vfpcc,
         .SysV => .x86_64_sysvcc,
         .Win64 => .win64cc,
-        .Kernel => return switch (target.cpu.arch) {
+        .M68kRTD => .m68k_rtdcc,
+        .Kernel => switch (target.cpu.arch) {
             .nvptx, .nvptx64 => .ptx_kernel,
             .amdgcn => .amdgpu_kernel,
             else => unreachable,

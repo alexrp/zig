@@ -179,34 +179,44 @@ pub const CallingConvention = enum(u8) {
     Async,
     /// Functions with this calling convention are inlined at all call sites.
     Inline,
-    /// x86-only.
+    /// Supported on arm, armeb, thumb, thumbeb, avr, csky, m68k, mips, mipsel, mips64, mips64el,
+    /// msp430, riscv32, riscv64, x86, and x86_64.
     Interrupt,
+    /// Supported on avr.
     Signal,
-    /// x86-only.
+    /// Supported on avr and msp430.
+    Builtin,
+    /// Supported on x86.
     Stdcall,
-    /// x86-only.
+    /// Supported on x86.
     Fastcall,
-    /// x86-only.
-    Vectorcall,
-    /// x86-only.
+    /// Supported on x86.
     Thiscall,
-    /// ARM Procedure Call Standard (obsolete)
-    /// ARM-only.
+    /// Supported on x86.
+    Regcall,
+    /// Supported on aarch64, aarch64_be, riscv32, riscv64, x86, and x86_64.
+    Vectorcall,
+    /// Supported on aarch64 and aarch64_be.
+    SVEVectorcall,
+    /// Arm Procedure Call Standard (obsolete). Supported on arm, armeb, thumb, and thumbeb.
     APCS,
-    /// ARM Architecture Procedure Call Standard (current standard)
-    /// ARM-only.
+    /// Arm Architecture Procedure Call Standard (current). Supported on arm, armeb, thumb, and
+    /// thumbeb.
     AAPCS,
-    /// ARM Architecture Procedure Call Standard Vector Floating-Point
-    /// ARM-only.
+    /// Arm Architecture Procedure Call Standard (current) with floating-point values passed in VFP
+    /// registers. Supported on arm, armeb, thumb, and thumbeb.
     AAPCSVFP,
-    /// x86-64-only.
+    /// Supported on x86_64.
     SysV,
-    /// x86-64-only.
+    /// Supported on x86_64.
     Win64,
-    /// AMD GPU, NVPTX, or SPIR-V kernel
+    /// Supported on m68k.
+    M68kRTD,
+    /// Supported on amdgcn, nvptx, nvptx64, spirv, spirv32, and spirv64.
     Kernel,
-    // Vulkan-only
+    /// Supported on spirv, spirv32, and spirv64 for Vulkan.
     Fragment,
+    /// Supported on spirv, spirv32, and spirv64 for Vulkan.
     Vertex,
 };
 
