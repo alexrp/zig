@@ -4565,7 +4565,7 @@ pub const Object = struct {
             if (!param_ty.isPtrLikeOptional(zcu) and !ptr_info.flags.is_allowzero) {
                 try attributes.addParamAttr(llvm_arg_i, .nonnull, &o.builder);
             }
-            if (fn_info.cc == .Interrupt) {
+            if (fn_info.cc == .Interrupt and zcu.root_mod.resolved_target.result.cpu.arch.isX86()) {
                 const child_type = try lowerType(o, Type.fromInterned(ptr_info.child));
                 try attributes.addParamAttr(llvm_arg_i, .{ .byval = child_type }, &o.builder);
             }
