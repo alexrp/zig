@@ -1792,7 +1792,7 @@ pub const DeclGen = struct {
 
         var trailing = try renderTypePrefix(dg.pass, &dg.ctype_pool, zcu, w, fn_ctype, .suffix, .{});
 
-        if (toCallingConvention(fn_info.cc)) |call_conv| {
+        if (toCallingConvention(fn_info.cc, dg.mod.resolved_target.result)) |call_conv| {
             try w.print("{}zig_callconv({s})", .{ trailing, call_conv });
             trailing = .maybe_space;
         }
@@ -7492,12 +7492,35 @@ fn writeMemoryOrder(w: anytype, order: std.builtin.AtomicOrder) !void {
     return w.writeAll(toMemoryOrder(order));
 }
 
-fn toCallingConvention(call_conv: std.builtin.CallingConvention) ?[]const u8 {
+fn toCallingConvention(call_conv: std.builtin.CallingConvention, target: std.Target) ?[]const u8 {
     return switch (call_conv) {
+        .Unspecified, .C, .Async => null,
+        .Naked => null, // Handled elsewhere.
+        .Inline => null, // No action needed; inlining happens in Sema.
+        .Interrupt => switch (target.cpu.arch) {
+            .csky => unreachable, // No GCC/Clang attribute.
+            else => "interrupt",
+        },
+        .Signal => "signal",
+        .Builtin => unreachable, // No GCC/Clang attribute.
         .Stdcall => "stdcall",
         .Fastcall => "fastcall",
-        .Vectorcall => "vectorcall",
-        else => null,
+        .Thiscall => "thiscall",
+        .Regcall => "regcall",
+        .Vectorcall => switch (target.cpu.arch) {
+            .aarch64, .aarch64_be => "aarch64_vector_pcs",
+            .riscv32, .riscv64 => "riscv_vector_cc",
+            .x86, .x86_64 => "vectorcall",
+            else => unreachable,
+        },
+        .SVEVectorcall => "aarch64_sve_pcs",
+        .APCS => unreachable, // No GCC/Clang attribute.
+        .AAPCS => "pcs(\"aapcs\")",
+        .AAPCSVFP => "pcs(\"aapcs-vfp\")",
+        .SysV => "sysv_abi",
+        .Win64 => "ms_abi",
+        .M68kRTD => "m68k_rtd",
+        .Kernel, .Fragment, .Vertex => unreachable,
     };
 }
 
