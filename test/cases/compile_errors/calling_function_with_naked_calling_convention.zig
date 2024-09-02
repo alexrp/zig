@@ -7,5 +7,5 @@ fn foo() callconv(.Naked) void {}
 // backend=llvm
 // target=native
 //
-// :2:5: error: unable to call function with naked calling convention
+// :2:5: error: unable to call function with calling convention 'Naked'
 // :4:1: note: function declared here

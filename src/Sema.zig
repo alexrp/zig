@@ -7507,13 +7507,13 @@ fn analyzeCall(
     if (try sema.resolveValue(func)) |func_val|
         if (func_val.isUndef(zcu))
             return sema.failWithUseOfUndef(block, call_src);
-    if (cc == .Naked) {
+    if (cc == .Naked or cc == .Interrupt) {
         const maybe_func_inst = try sema.funcDeclSrcInst(func);
         const msg = msg: {
             const msg = try sema.errMsg(
                 func_src,
-                "unable to call function with naked calling convention",
-                .{},
+                "unable to call function with calling convention '{s}'",
+                .{@tagName(cc)},
             );
             errdefer msg.destroy(sema.gpa);
 
