@@ -1412,6 +1412,10 @@ pub const Object = struct {
         if (stack_alignment != .none) {
             try attributes.addFnAttr(.{ .alignstack = stack_alignment.toLlvm() }, &o.builder);
             try attributes.addFnAttr(.@"noinline", &o.builder);
+        } else if (fn_info.cc == .Interrupt and target.cpu.arch.isArmOrThumb()) {
+            // This should not be done for the old APCS, but our Abi enum cannot express that yet.
+            try attributes.addFnAttr(.{ .alignstack = InternPool.Alignment.@"8".toLlvm() }, &o.builder);
+            try attributes.addFnAttr(.@"noinline", &o.builder);
         } else {
             _ = try attributes.removeFnAttr(.alignstack);
         }
