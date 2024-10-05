@@ -254,12 +254,12 @@ pub fn buildCRTFile(comp: *Compilation, crt_file: CRTFile, prog_node: std.Progre
                     "-Wno-nonportable-include-path",
                     "-include",
                     try lib_path(comp, arena, lib_libc_glibc ++ "include" ++ path.sep_str ++ "libc-symbols.h"),
-                    "-DPIC",
                     "-DSHARED",
                     "-DTOP_NAMESPACE=glibc",
                     "-DASSEMBLER",
                     "-Wa,--noexecstack",
                 });
+                if (comp.root_mod.pic) try args.append("-DPIC");
                 const src_path = if (start_old_init_fini) "start-2.33.S" else "start.S";
                 break :blk .{
                     .src_path = try start_asm_path(comp, arena, src_path),
@@ -398,10 +398,10 @@ pub fn buildCRTFile(comp: *Compilation, crt_file: CRTFile, prog_node: std.Progre
                     "-Wno-nonportable-include-path",
                     "-include",
                     try lib_path(comp, arena, lib_libc_glibc ++ "include" ++ path.sep_str ++ "libc-symbols.h"),
-                    "-DPIC",
                     "-DLIBC_NONSHARED=1",
                     "-DTOP_NAMESPACE=glibc",
                 });
+                if (comp.root_mod.pic) try args.append("-DPIC");
                 files_buf[files_index] = .{
                     .src_path = try lib_path(comp, arena, dep.path),
                     .cache_exempt_flags = args.items,
