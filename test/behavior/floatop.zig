@@ -1188,8 +1188,7 @@ test "@floor with vectors" {
     if (builtin.zig_backend == .stage2_arm) return error.SkipZigTest; // TODO
     if (builtin.zig_backend == .stage2_wasm) return error.SkipZigTest; // TODO
     if (builtin.zig_backend == .stage2_riscv64) return error.SkipZigTest;
-    if (builtin.zig_backend == .stage2_x86_64 and
-        !comptime std.Target.x86.featureSetHas(builtin.cpu.features, .sse4_1)) return error.SkipZigTest;
+    if (builtin.zig_backend == .stage2_x86_64 and !builtin.cpu.has(.x86, .sse4_1)) return error.SkipZigTest;
 
     try testFloorWithVectors();
     try comptime testFloorWithVectors();
@@ -1286,8 +1285,7 @@ test "@ceil with vectors" {
     if (builtin.zig_backend == .stage2_arm) return error.SkipZigTest; // TODO
     if (builtin.zig_backend == .stage2_wasm) return error.SkipZigTest; // TODO
     if (builtin.zig_backend == .stage2_riscv64) return error.SkipZigTest;
-    if (builtin.zig_backend == .stage2_x86_64 and
-        !comptime std.Target.x86.featureSetHas(builtin.cpu.features, .sse4_1)) return error.SkipZigTest;
+    if (builtin.zig_backend == .stage2_x86_64 and !builtin.cpu.has(.x86, .sse4_1)) return error.SkipZigTest;
 
     try testCeilWithVectors();
     try comptime testCeilWithVectors();
@@ -1384,8 +1382,7 @@ test "@trunc with vectors" {
     if (builtin.zig_backend == .stage2_arm) return error.SkipZigTest; // TODO
     if (builtin.zig_backend == .stage2_wasm) return error.SkipZigTest; // TODO
     if (builtin.zig_backend == .stage2_riscv64) return error.SkipZigTest;
-    if (builtin.zig_backend == .stage2_x86_64 and
-        !comptime std.Target.x86.featureSetHas(builtin.cpu.features, .sse4_1)) return error.SkipZigTest;
+    if (builtin.zig_backend == .stage2_x86_64 and !builtin.cpu.has(.x86, .sse4_1)) return error.SkipZigTest;
 
     try testTruncWithVectors();
     try comptime testTruncWithVectors();

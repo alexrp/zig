@@ -201,11 +201,11 @@ pub fn classifySystemV(ty: Type, zcu: *Zcu, target: std.Target, ctx: Context) [8
                         .integer_per_element, .none, .none, .none,
                         .none,                .none, .none, .none,
                     };
-                    if (bits <= 256 and std.Target.x86.featureSetHas(target.cpu.features, .avx)) return .{
+                    if (bits <= 256 and target.cpu.has(.x86, .avx)) return .{
                         .integer_per_element, .none, .none, .none,
                         .none,                .none, .none, .none,
                     };
-                    if (bits <= 512 and std.Target.x86.featureSetHas(target.cpu.features, .avx512f)) return .{
+                    if (bits <= 512 and target.cpu.has(.x86, .avx512f)) return .{
                         .integer_per_element, .none, .none, .none,
                         .none,                .none, .none, .none,
                     };
@@ -220,7 +220,7 @@ pub fn classifySystemV(ty: Type, zcu: *Zcu, target: std.Target, ctx: Context) [8
                 .sse,  .sseup, .none, .none,
                 .none, .none,  .none, .none,
             };
-            if (ctx == .arg and !std.Target.x86.featureSetHas(target.cpu.features, .avx)) return memory_class;
+            if (ctx == .arg and !target.cpu.has(.x86, .avx)) return memory_class;
             if (bits <= 192) return .{
                 .sse,  .sseup, .sseup, .none,
                 .none, .none,  .none,  .none,
@@ -229,7 +229,7 @@ pub fn classifySystemV(ty: Type, zcu: *Zcu, target: std.Target, ctx: Context) [8
                 .sse,  .sseup, .sseup, .sseup,
                 .none, .none,  .none,  .none,
             };
-            if (ctx == .arg and !std.Target.x86.featureSetHas(target.cpu.features, .avx512f)) return memory_class;
+            if (ctx == .arg and !target.cpu.has(.x86, .avx512f)) return memory_class;
             if (bits <= 320) return .{
                 .sse,   .sseup, .sseup, .sseup,
                 .sseup, .none,  .none,  .none,

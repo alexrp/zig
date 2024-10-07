@@ -3080,7 +3080,7 @@ pub fn atomicPtrAlignment(
         .aarch64_be,
         => 128,
 
-        .x86_64 => if (std.Target.x86.featureSetHas(target.cpu.features, .cx16)) 128 else 64,
+        .x86_64 => if (target.cpu.has(.x86, .cx16)) 128 else 64,
     };
 
     if (ty.toIntern() == .bool_type) return .none;

@@ -612,7 +612,7 @@ const NavGen = struct {
 
         for (ints) |int| {
             const has_feature = if (int.feature) |feature|
-                Target.spirv.featureSetHas(target.cpu.features, feature)
+                target.cpu.has(.spirv, feature)
             else
                 true;
 
@@ -632,7 +632,7 @@ const NavGen = struct {
     /// TODO: Maybe this should be cached?
     fn largestSupportedIntBits(self: *NavGen) u16 {
         const target = self.getTarget();
-        return if (Target.spirv.featureSetHas(target.cpu.features, .Int64))
+        return if (target.cpu.has(.spirv, .Int64))
             64
         else
             32;
@@ -1597,10 +1597,10 @@ const NavGen = struct {
                 // so if the float is not supported, just return an error.
                 const bits = ty.floatBits(target);
                 const supported = switch (bits) {
-                    16 => Target.spirv.featureSetHas(target.cpu.features, .Float16),
+                    16 => target.cpu.has(.spirv, .Float16),
                     // 32-bit floats are always supported (see spec, 2.16.1, Data rules).
                     32 => true,
-                    64 => Target.spirv.featureSetHas(target.cpu.features, .Float64),
+                    64 => target.cpu.has(.spirv, .Float64),
                     else => false,
                 };
 
@@ -3888,7 +3888,7 @@ const NavGen = struct {
         // - Additionally, if info.bits != 32, we'll have to check the high bits
         //   of the result too.
 
-        const largest_int_bits: u16 = if (Target.spirv.featureSetHas(target.cpu.features, .Int64)) 64 else 32;
+        const largest_int_bits: u16 = if (target.cpu.has(.spirv, .Int64)) 64 else 32;
         // If non-null, the number of bits that the multiplication should be performed in. If
         // null, we have to use wide multiplication.
         const maybe_op_ty_bits: ?u16 = switch (info.bits) {

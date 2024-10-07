@@ -252,12 +252,19 @@ pub fn classifyCompilerRtLibName(target: std.Target, name: []const u8) CompilerR
 
 pub fn hasDebugInfo(target: std.Target) bool {
     return switch (target.cpu.arch) {
-        .nvptx, .nvptx64 => std.Target.nvptx.featureSetHas(target.cpu.features, .ptx75) or
-            std.Target.nvptx.featureSetHas(target.cpu.features, .ptx76) or
-            std.Target.nvptx.featureSetHas(target.cpu.features, .ptx77) or
-            std.Target.nvptx.featureSetHas(target.cpu.features, .ptx78) or
-            std.Target.nvptx.featureSetHas(target.cpu.features, .ptx80) or
-            std.Target.nvptx.featureSetHas(target.cpu.features, .ptx81),
+        // TODO: We should make newer PTX versions depend on older ones so we'd just check `ptx75`.
+        .nvptx, .nvptx64 => target.cpu.hasAny(.nvptx, .{
+            .ptx75,
+            .ptx76,
+            .ptx77,
+            .ptx78,
+            .ptx80,
+            .ptx81,
+            .ptx82,
+            .ptx83,
+            .ptx84,
+            .ptx85,
+        }),
         .bpfel, .bpfeb => false,
         else => true,
     };
@@ -456,33 +463,25 @@ pub fn llvmMachineAbi(target: std.Target) ?[:0]const u8 {
     // Once our self-hosted linker can handle both ABIs, this hack should go away.
     if (target.cpu.arch == .powerpc64) return "elfv2";
 
-    switch (target.cpu.arch) {
-        .riscv64 => {
-            const featureSetHas = std.Target.riscv.featureSetHas;
-            if (featureSetHas(target.cpu.features, .e)) {
-                return "lp64e";
-            } else if (featureSetHas(target.cpu.features, .d)) {
-                return "lp64d";
-            } else if (featureSetHas(target.cpu.features, .f)) {
-                return "lp64f";
-            } else {
-                return "lp64";
-            }
-        },
-        .riscv32 => {
-            const featureSetHas = std.Target.riscv.featureSetHas;
-            if (featureSetHas(target.cpu.features, .e)) {
-                return "ilp32e";
-            } else if (featureSetHas(target.cpu.features, .d)) {
-                return "ilp32d";
-            } else if (featureSetHas(target.cpu.features, .f)) {
-                return "ilp32f";
-            } else {
-                return "ilp32";
-            }
-        },
-        else => return null,
-    }
+    return switch (target.cpu.arch) {
+        .riscv64 => if (target.cpu.has(.riscv, .e))
+            "lp64e"
+        else if (target.cpu.has(.riscv, .d))
+            "lp64d"
+        else if (target.cpu.has(.riscv, .f))
+            "lp64f"
+        else
+            "lp64",
+        .riscv32 => if (target.cpu.has(.riscv, .e))
+            "ilp32e"
+        else if (target.cpu.has(.riscv, .d))
+            "ilp32d"
+        else if (target.cpu.has(.riscv, .f))
+            "ilp32f"
+        else
+            "ilp32",
+        else => null,
+    };
 }
 
 /// This function returns 1 if function alignment is not observable or settable. Note that this
@@ -518,7 +517,7 @@ pub fn minFunctionAlignment(target: std.Target) Alignment {
     return switch (target.cpu.arch) {
         .riscv32,
         .riscv64,
-        => if (std.Target.riscv.featureSetHasAny(target.cpu.features, .{ .c, .zca })) .@"2" else .@"4",
+        => if (target.cpu.hasAny(.riscv, .{ .c, .zca })) .@"2" else .@"4",
         .thumb,
         .thumbeb,
         .csky,

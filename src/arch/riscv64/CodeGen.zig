@@ -1503,7 +1503,7 @@ fn genBody(func: *Func, body: []const Air.Inst.Index) InnerError!void {
 
             .mul,
             .mul_wrap,
-            .div_trunc, 
+            .div_trunc,
             .div_exact,
             .rem,
 
@@ -1521,13 +1521,13 @@ fn genBody(func: *Func, body: []const Air.Inst.Index) InnerError!void {
             .max,
             => try func.airBinOp(inst, tag),
 
-                        
+
             .ptr_add,
             .ptr_sub => try func.airPtrArithmetic(inst, tag),
 
             .mod,
-            .div_float, 
-            .div_floor, 
+            .div_float,
+            .div_floor,
             => return func.fail("TODO: {s}", .{@tagName(tag)}),
 
             .sqrt,
@@ -1681,7 +1681,7 @@ fn genBody(func: *Func, body: []const Air.Inst.Index) InnerError!void {
             .ptr_slice_ptr_ptr => try func.airPtrSlicePtrPtr(inst),
 
             .array_elem_val      => try func.airArrayElemVal(inst),
-            
+
             .slice_elem_val      => try func.airSliceElemVal(inst),
             .slice_elem_ptr      => try func.airSliceElemPtr(inst),
 
@@ -8457,7 +8457,7 @@ fn typeOfIndex(func: *Func, inst: Air.Inst.Index) Type {
 }
 
 fn hasFeature(func: *Func, feature: Target.riscv.Feature) bool {
-    return Target.riscv.featureSetHas(func.target.cpu.features, feature);
+    return func.target.cpu.has(.riscv, feature);
 }
 
 pub fn errUnionPayloadOffset(payload_ty: Type, zcu: *Zcu) u64 {

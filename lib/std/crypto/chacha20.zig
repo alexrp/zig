@@ -501,14 +501,14 @@ fn ChaChaImpl(comptime rounds_nb: usize) type {
         .x86_64 => {
             if (builtin.zig_backend == .stage2_x86_64) return ChaChaNonVecImpl(rounds_nb);
 
-            const has_avx2 = std.Target.x86.featureSetHas(builtin.cpu.features, .avx2);
-            const has_avx512f = std.Target.x86.featureSetHas(builtin.cpu.features, .avx512f);
+            const has_avx2 = builtin.cpu.has(.x86, .avx2);
+            const has_avx512f = builtin.cpu.has(.x86, .avx512f);
             if (has_avx512f) return ChaChaVecImpl(rounds_nb, 4);
             if (has_avx2) return ChaChaVecImpl(rounds_nb, 2);
             return ChaChaVecImpl(rounds_nb, 1);
         },
         .aarch64 => {
-            const has_neon = std.Target.aarch64.featureSetHas(builtin.cpu.features, .neon);
+            const has_neon = builtin.cpu.has(.aarch64, .neon);
             if (has_neon) return ChaChaVecImpl(rounds_nb, 4);
             return ChaChaNonVecImpl(rounds_nb);
         },

@@ -19752,13 +19752,13 @@ fn regExtraBits(self: *Self, ty: Type) u64 {
 }
 
 fn hasFeature(self: *Self, feature: Target.x86.Feature) bool {
-    return Target.x86.featureSetHas(self.target.cpu.features, feature);
+    return self.target.cpu.has(.x86, feature);
 }
 fn hasAnyFeatures(self: *Self, features: anytype) bool {
-    return Target.x86.featureSetHasAny(self.target.cpu.features, features);
+    return self.target.cpu.hasAny(.x86, features);
 }
 fn hasAllFeatures(self: *Self, features: anytype) bool {
-    return Target.x86.featureSetHasAll(self.target.cpu.features, features);
+    return self.target.cpu.hasAll(.x86, features);
 }
 
 fn typeOf(self: *Self, inst: Air.Inst.Ref) Type {

@@ -2,8 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const expect = std.testing.expect;
 
-const no_x86_64_hardware_fma_support = builtin.zig_backend == .stage2_x86_64 and
-    !std.Target.x86.featureSetHas(builtin.cpu.features, .fma);
+const no_x86_64_hardware_fma_support = builtin.zig_backend == .stage2_x86_64 and !builtin.cpu.has(.x86, .fma);
 
 test "@mulAdd" {
     if (builtin.zig_backend == .stage2_riscv64) return error.SkipZigTest;

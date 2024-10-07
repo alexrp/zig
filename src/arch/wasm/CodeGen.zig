@@ -1586,7 +1586,7 @@ fn toWasmBits(bits: u16) ?u16 {
 fn memcpy(func: *CodeGen, dst: WValue, src: WValue, len: WValue) !void {
     // When bulk_memory is enabled, we lower it to wasm's memcpy instruction.
     // If not, we lower it ourselves manually
-    if (std.Target.wasm.featureSetHas(func.target.cpu.features, .bulk_memory)) {
+    if (func.target.cpu.has(.wasm, .bulk_memory)) {
         try func.lowerToStack(dst);
         try func.lowerToStack(src);
         try func.emitWValue(len);
@@ -1794,9 +1794,7 @@ const SimdStoreStrategy = enum {
 fn determineSimdStoreStrategy(ty: Type, zcu: *Zcu, target: std.Target) SimdStoreStrategy {
     std.debug.assert(ty.zigTypeTag(zcu) == .vector);
     if (ty.bitSize(zcu) != 128) return .unrolled;
-    const hasFeature = std.Target.wasm.featureSetHas;
-    const features = target.cpu.features;
-    if (hasFeature(features, .relaxed_simd) or hasFeature(features, .simd128)) {
+    if (target.cpu.has(.wasm, .relaxed_simd) or target.cpu.has(.wasm, .simd128)) {
         return .direct;
     }
     return .unrolled;
@@ -4928,7 +4926,7 @@ fn memset(func: *CodeGen, elem_ty: Type, ptr: WValue, len: WValue, value: WValue
 
     // When bulk_memory is enabled, we lower it to wasm's memset instruction.
     // If not, we lower it ourselves.
-    if (std.Target.wasm.featureSetHas(func.target.cpu.features, .bulk_memory) and abi_size == 1) {
+    if (func.target.cpu.has(.wasm, .bulk_memory) and abi_size == 1) {
         try func.lowerToStack(ptr);
         try func.emitWValue(value);
         try func.emitWValue(len);
@@ -7472,7 +7470,7 @@ fn airErrorSetHasValue(func: *CodeGen, inst: Air.Inst.Index) InnerError!void {
 }
 
 inline fn useAtomicFeature(func: *const CodeGen) bool {
-    return std.Target.wasm.featureSetHas(func.target.cpu.features, .atomics);
+    return func.target.cpu.has(.wasm, .atomics);
 }
 
 fn airCmpxchg(func: *CodeGen, inst: Air.Inst.Index) InnerError!void {

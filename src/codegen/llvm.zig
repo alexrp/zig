@@ -37,9 +37,9 @@ const compilerRtIntAbbrev = target_util.compilerRtIntAbbrev;
 
 const Error = error{ OutOfMemory, CodegenFail };
 
-fn subArchName(features: std.Target.Cpu.Feature.Set, arch: anytype, mappings: anytype) ?[]const u8 {
+fn subArchName(target: std.Target, comptime family: std.Target.Cpu.Arch.Family, mappings: anytype) ?[]const u8 {
     inline for (mappings) |mapping| {
-        if (arch.featureSetHas(features, mapping[0])) return mapping[1];
+        if (target.cpu.has(family, mapping[0])) return mapping[1];
     }
 
     return null;
@@ -48,8 +48,6 @@ fn subArchName(features: std.Target.Cpu.Feature.Set, arch: anytype, mappings: an
 pub fn targetTriple(allocator: Allocator, target: std.Target) ![]const u8 {
     var llvm_triple = std.ArrayList(u8).init(allocator);
     defer llvm_triple.deinit();
-
-    const features = target.cpu.features;
 
     const llvm_arch = switch (target.cpu.arch) {
         .arm => "arm",
@@ -66,10 +64,10 @@ pub fn targetTriple(allocator: Allocator, target: std.Target) ![]const u8 {
         .loongarch64 => "loongarch64",
         .m68k => "m68k",
         // MIPS sub-architectures are a bit irregular, so we handle them manually here.
-        .mips => if (std.Target.mips.featureSetHas(features, .mips32r6)) "mipsisa32r6" else "mips",
-        .mipsel => if (std.Target.mips.featureSetHas(features, .mips32r6)) "mipsisa32r6el" else "mipsel",
-        .mips64 => if (std.Target.mips.featureSetHas(features, .mips64r6)) "mipsisa64r6" else "mips64",
-        .mips64el => if (std.Target.mips.featureSetHas(features, .mips64r6)) "mipsisa64r6el" else "mips64el",
+        .mips => if (target.cpu.has(.mips, .mips32r6)) "mipsisa32r6" else "mips",
+        .mipsel => if (target.cpu.has(.mips, .mips32r6)) "mipsisa32r6el" else "mipsel",
+        .mips64 => if (target.cpu.has(.mips, .mips64r6)) "mipsisa64r6" else "mips64",
+        .mips64el => if (target.cpu.has(.mips, .mips64r6)) "mipsisa64r6el" else "mips64el",
         .msp430 => "msp430",
         .powerpc => "powerpc",
         .powerpcle => "powerpcle",
@@ -108,7 +106,7 @@ pub fn targetTriple(allocator: Allocator, target: std.Target) ![]const u8 {
     try llvm_triple.appendSlice(llvm_arch);
 
     const llvm_sub_arch: ?[]const u8 = switch (target.cpu.arch) {
-        .arm, .armeb, .thumb, .thumbeb => subArchName(features, std.Target.arm, .{
+        .arm, .armeb, .thumb, .thumbeb => subArchName(target, .arm, .{
             .{ .v4t, "v4t" },
             .{ .v5t, "v5t" },
             .{ .v5te, "v5te" },
@@ -144,13 +142,13 @@ pub fn targetTriple(allocator: Allocator, target: std.Target) ![]const u8 {
             .{ .v9_4a, "v9.4a" },
             .{ .v9_5a, "v9.5a" },
         }),
-        .powerpc => subArchName(features, std.Target.powerpc, .{
+        .powerpc => subArchName(target, .powerpc, .{
             .{ .spe, "spe" },
         }),
-        .spirv => subArchName(features, std.Target.spirv, .{
+        .spirv => subArchName(target, .spirv, .{
             .{ .v1_5, "1.5" },
         }),
-        .spirv32, .spirv64 => subArchName(features, std.Target.spirv, .{
+        .spirv32, .spirv64 => subArchName(target, .spirv, .{
             .{ .v1_5, "1.5" },
             .{ .v1_4, "1.4" },
             .{ .v1_3, "1.3" },
@@ -398,13 +396,13 @@ pub fn targetArch(arch_tag: std.Target.Cpu.Arch) llvm.ArchType {
 }
 
 pub fn supportsTailCall(target: std.Target) bool {
-    switch (target.cpu.arch) {
-        .wasm32, .wasm64 => return std.Target.wasm.featureSetHas(target.cpu.features, .tail_call),
+    return switch (target.cpu.arch) {
+        .wasm32, .wasm64 => target.cpu.has(.wasm, .tail_call),
         // Although these ISAs support tail calls, LLVM does not support tail calls on them.
-        .mips, .mipsel, .mips64, .mips64el => return false,
-        .powerpc, .powerpcle, .powerpc64, .powerpc64le => return false,
-        else => return true,
-    }
+        .mips, .mipsel, .mips64, .mips64el => false,
+        .powerpc, .powerpcle, .powerpc64, .powerpc64le => false,
+        else => true,
+    };
 }
 
 const DataLayoutBuilder = struct {
@@ -10056,7 +10054,7 @@ pub const FuncGen = struct {
         // This logic can be removed once https://github.com/ziglang/zig/issues/16360 is done.
         const intrinsic_len0_traps = o.target.isWasm() and
             ptr_ty.isSlice(zcu) and
-            std.Target.wasm.featureSetHas(o.target.cpu.features, .bulk_memory);
+            o.target.cpu.has(.wasm, .bulk_memory);
 
         if (try self.air.value(bin_op.rhs, pt)) |elem_val| {
             if (elem_val.isUndefDeep(zcu)) {
@@ -10212,7 +10210,7 @@ pub const FuncGen = struct {
         // We only have to do this for slices as arrays will have a valid pointer.
         // This logic can be removed once https://github.com/ziglang/zig/issues/16360 is done.
         if (o.target.isWasm() and
-            std.Target.wasm.featureSetHas(o.target.cpu.features, .bulk_memory) and
+            o.target.cpu.has(.wasm, .bulk_memory) and
             dest_ptr_ty.isSlice(zcu))
         {
             const usize_zero = try o.builder.intValue(try o.lowerType(Type.usize), 0);
@@ -11954,7 +11952,7 @@ fn returnTypeByRef(zcu: *Zcu, target: std.Target, ty: Type) bool {
     if (isByRef(ty, zcu)) {
         return true;
     } else if (target.cpu.arch.isX86() and
-        !std.Target.x86.featureSetHas(target.cpu.features, .evex512) and
+        !target.cpu.has(.x86, .evex512) and
         ty.totalVectorBits(zcu) >= 512)
     {
         // As of LLVM 18, passing a vector byval with fastcc that is 512 bits or more returns
@@ -12238,7 +12236,7 @@ const ParamTypeIterator = struct {
                 } else if (isByRef(ty, zcu)) {
                     return .byref;
                 } else if (target.cpu.arch.isX86() and
-                    !std.Target.x86.featureSetHas(target.cpu.features, .evex512) and
+                    !target.cpu.has(.x86, .evex512) and
                     ty.totalVectorBits(zcu) >= 512)
                 {
                     // As of LLVM 18, passing a vector byval with fastcc that is 512 bits or more returns
@@ -12651,7 +12649,7 @@ fn isScalar(zcu: *Zcu, ty: Type) bool {
 /// or if it produces miscompilations.
 fn backendSupportsF80(target: std.Target) bool {
     return switch (target.cpu.arch) {
-        .x86_64, .x86 => !std.Target.x86.featureSetHas(target.cpu.features, .soft_float),
+        .x86, .x86_64 => !target.cpu.has(.x86, .soft_float),
         else => false,
     };
 }
@@ -12681,10 +12679,10 @@ fn backendSupportsF16(target: std.Target) bool {
         .armeb,
         .thumb,
         .thumbeb,
-        => target.floatAbi() == .soft or std.Target.arm.featureSetHas(target.cpu.features, .fp_armv8),
+        => target.floatAbi() == .soft or target.cpu.has(.arm, .fp_armv8),
         .aarch64,
         .aarch64_be,
-        => std.Target.aarch64.featureSetHas(target.cpu.features, .fp_armv8),
+        => target.cpu.has(.aarch64, .fp_armv8),
         else => true,
     };
 }
@@ -12708,10 +12706,10 @@ fn backendSupportsF128(target: std.Target) bool {
         .armeb,
         .thumb,
         .thumbeb,
-        => target.floatAbi() == .soft or std.Target.arm.featureSetHas(target.cpu.features, .fp_armv8),
+        => target.floatAbi() == .soft or target.cpu.has(.arm, .fp_armv8),
         .aarch64,
         .aarch64_be,
-        => std.Target.aarch64.featureSetHas(target.cpu.features, .fp_armv8),
+        => target.cpu.has(.aarch64, .fp_armv8),
         else => true,
     };
 }
