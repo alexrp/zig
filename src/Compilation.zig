@@ -1770,7 +1770,7 @@ pub fn create(gpa: Allocator, arena: Allocator, options: CreateOptions) !*Compil
                     }
                     // Loads the libraries provided by `target_util.libcFullLinkFlags(target)`.
                     comp.link_task_queue.shared.appendAssumeCapacity(.load_host_libc);
-                } else if (target.isMusl() and !target.isWasm()) {
+                } else if (target.isMuslLibC()) {
                     if (!std.zig.target.canBuildLibC(target)) return error.LibCUnavailable;
 
                     if (musl.needsCrtiCrtn(target)) {
@@ -1802,7 +1802,7 @@ pub fn create(gpa: Allocator, arena: Allocator, options: CreateOptions) !*Compil
                         .{ .glibc_shared_objects = {} },
                         .{ .glibc_crt_file = .libc_nonshared_a },
                     });
-                } else if (target.isWasm() and target.os.tag == .wasi) {
+                } else if (target.isWasiLibC()) {
                     if (!std.zig.target.canBuildLibC(target)) return error.LibCUnavailable;
 
                     for (comp.wasi_emulated_libs) |crt_file| {

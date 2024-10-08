@@ -146,6 +146,18 @@ pub const Os = struct {
             };
         }
 
+        pub inline fn isMinGW(tag: Os.Tag, abi: Abi) bool {
+            return tag == .windows and abi.isGnu();
+        }
+
+        pub inline fn isMuslLibC(tag: Os.Tag, abi: Abi) bool {
+            return tag == .linux and abi.isMusl();
+        }
+
+        pub inline fn isWasiLibC(tag: Os.Tag, abi: Abi) bool {
+            return tag == .wasi and abi.isMusl();
+        }
+
         pub inline fn isGnuLibC(tag: Os.Tag, abi: Abi) bool {
             return (tag == .hurd or tag == .linux) and abi.isGnu();
         }
@@ -2032,7 +2044,15 @@ pub fn libPrefix(target: Target) [:0]const u8 {
 }
 
 pub inline fn isMinGW(target: Target) bool {
-    return target.os.tag == .windows and target.abi.isGnu();
+    return target.os.tag.isMinGW(target.abi);
+}
+
+pub inline fn isMuslLibC(target: Target) bool {
+    return target.os.tag.isMuslLibC(target.abi);
+}
+
+pub inline fn isWasiLibC(target: Target) bool {
+    return target.os.tag.isWasiLibC(target.abi);
 }
 
 pub inline fn isGnuLibC(target: Target) bool {
