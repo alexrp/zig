@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const expect = std.testing.expect;
 const assert = std.debug.assert;
-const native_endian = builtin.target.cpu.arch.endian();
+const native_endian = builtin.cpu.arch.endian();
 
 test "reinterpret bytes as integer with nonzero offset" {
     if (builtin.zig_backend == .stage2_sparc64) return error.SkipZigTest; // TODO

@@ -135,7 +135,7 @@ pub fn findEndRecord(seekable_stream: anytype, stream_len: u64) !EndRecord {
             std.mem.readInt(u16, record_bytes[20..22], .little) == comment_len)
         {
             const record: *align(1) EndRecord = @ptrCast(record_bytes.ptr);
-            if (builtin.target.cpu.arch.endian() != .little) {
+            if (builtin.cpu.arch.endian() != .little) {
                 std.mem.byteSwapAllFields(@TypeOf(record.*), record);
             }
             return record.*;

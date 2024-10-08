@@ -3972,7 +3972,7 @@ pub const Object = struct {
 
         val.writeToPackedMemory(ty, pt, std.mem.sliceAsBytes(limbs)[0..bytes], 0) catch unreachable;
 
-        if (builtin.target.cpu.arch.endian() == .little) {
+        if (builtin.cpu.arch.endian() == .little) {
             if (target.cpu.arch.endian() == .big)
                 std.mem.reverse(u8, std.mem.sliceAsBytes(limbs)[0..bytes]);
         } else if (target.cpu.arch.endian() == .little) {

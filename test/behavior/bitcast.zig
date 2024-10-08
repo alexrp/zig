@@ -6,7 +6,7 @@ const expectEqual = std.testing.expectEqual;
 const math = std.math;
 const maxInt = std.math.maxInt;
 const minInt = std.math.minInt;
-const native_endian = builtin.target.cpu.arch.endian();
+const native_endian = builtin.cpu.arch.endian();
 
 test "@bitCast iX -> uX (32, 64)" {
     if (builtin.zig_backend == .stage2_arm) return error.SkipZigTest;

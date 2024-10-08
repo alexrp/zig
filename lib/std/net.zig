@@ -8,7 +8,7 @@ const mem = std.mem;
 const posix = std.posix;
 const fs = std.fs;
 const io = std.io;
-const native_endian = builtin.target.cpu.arch.endian();
+const native_endian = builtin.cpu.arch.endian();
 const native_os = builtin.os.tag;
 const windows = std.os.windows;
 

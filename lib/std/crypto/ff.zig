@@ -27,7 +27,7 @@ const t_bits: usize = @bitSizeOf(Limb) - carry_bits;
 // A TLimb is a Limb that is truncated to t_bits.
 const TLimb = meta.Int(.unsigned, t_bits);
 
-const native_endian = builtin.target.cpu.arch.endian();
+const native_endian = builtin.cpu.arch.endian();
 
 // A WideLimb is a Limb that is twice as wide as a normal Limb.
 const WideLimb = struct {

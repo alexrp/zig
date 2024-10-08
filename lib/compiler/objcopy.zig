@@ -199,7 +199,7 @@ fn cmdObjCopy(
             });
         },
         .elf => {
-            if (elf_hdr.endian != builtin.target.cpu.arch.endian())
+            if (elf_hdr.endian != builtin.cpu.arch.endian())
                 fatal("zig objcopy: ELF to ELF copying only supports native endian", .{});
             if (elf_hdr.phoff == 0) // no program header
                 fatal("zig objcopy: ELF to ELF copying only supports programs", .{});

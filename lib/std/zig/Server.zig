@@ -315,6 +315,6 @@ const builtin = @import("builtin");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
-const native_endian = builtin.target.cpu.arch.endian();
+const native_endian = builtin.cpu.arch.endian();
 const need_bswap = native_endian != .little;
 const Cache = std.Build.Cache;

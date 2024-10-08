@@ -3619,7 +3619,7 @@ pub const GUID = extern struct {
     Data3: u16,
     Data4: [8]u8,
 
-    const hex_offsets = switch (builtin.target.cpu.arch.endian()) {
+    const hex_offsets = switch (builtin.cpu.arch.endian()) {
         .big => [16]u6{
             0,  2,  4,  6,
             9,  11, 14, 16,

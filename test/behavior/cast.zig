@@ -6,7 +6,7 @@ const expectEqual = std.testing.expectEqual;
 const expectEqualSlices = std.testing.expectEqualSlices;
 const mem = std.mem;
 const maxInt = std.math.maxInt;
-const native_endian = builtin.target.cpu.arch.endian();
+const native_endian = builtin.cpu.arch.endian();
 
 test "int to ptr cast" {
     const x = @as(usize, 13);
