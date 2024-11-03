@@ -135,7 +135,7 @@ export fn zig_f64(x: f64) void {
     expect(x == 56.78) catch @panic("test failure: zig_f64");
 }
 export fn zig_longdouble(x: c_longdouble) void {
-    if (!builtin.target.isWasm()) return; // waiting for #1481
+    if (!builtin.cpu.arch.isWasm()) return; // waiting for #1481
     expect(x == 12.34) catch @panic("test failure: zig_longdouble");
 }
 
@@ -1659,7 +1659,7 @@ test "bool simd vector" {
     }
 
     {
-        if (!builtin.target.isWasm()) c_vector_256_bool(.{
+        if (!builtin.cpu.arch.isWasm()) c_vector_256_bool(.{
             false,
             true,
             true,
@@ -2177,7 +2177,7 @@ test "bool simd vector" {
         try expect(vec[255] == false);
     }
     {
-        if (!builtin.target.isWasm()) c_vector_512_bool(.{
+        if (!builtin.cpu.arch.isWasm()) c_vector_512_bool(.{
             true,
             true,
             true,
@@ -5403,7 +5403,7 @@ pub export fn zig_ret_DC() DC {
 const CFF = extern struct { v1: u8, v2: f32, v3: f32 };
 
 test "CFF: Zig passes to C" {
-    if (builtin.target.cpu.arch == .x86) return error.SkipZigTest;
+    if (builtin.cpu.arch == .x86) return error.SkipZigTest;
     if (builtin.cpu.arch.isMIPS64()) return error.SkipZigTest;
     if (builtin.cpu.arch.isPowerPC()) return error.SkipZigTest;
     try expectOk(c_assert_CFF(.{ .v1 = 39, .v2 = 0.875, .v3 = 1.0 }));
@@ -5414,7 +5414,7 @@ test "CFF: Zig returns to C" {
     try expectOk(c_assert_ret_CFF());
 }
 test "CFF: C passes to Zig" {
-    if (builtin.target.cpu.arch == .x86) return error.SkipZigTest;
+    if (builtin.cpu.arch == .x86) return error.SkipZigTest;
     if (builtin.cpu.arch.isRISCV() and builtin.mode != .Debug) return error.SkipZigTest;
     if (builtin.cpu.arch == .aarch64 and builtin.mode != .Debug) return error.SkipZigTest;
     if (builtin.cpu.arch.isMIPS64()) return error.SkipZigTest;
@@ -5549,8 +5549,8 @@ const f16_struct = extern struct {
 };
 extern fn c_f16_struct(f16_struct) f16_struct;
 test "f16 struct" {
-    if (builtin.target.cpu.arch.isMIPS64()) return error.SkipZigTest;
-    if (builtin.target.cpu.arch.isPowerPC32()) return error.SkipZigTest;
+    if (builtin.cpu.arch.isMIPS64()) return error.SkipZigTest;
+    if (builtin.cpu.arch.isPowerPC32()) return error.SkipZigTest;
     if (builtin.cpu.arch.isArm() and builtin.mode != .Debug) return error.SkipZigTest;
 
     const a = c_f16_struct(.{ .a = 12 });
@@ -5591,7 +5591,7 @@ test "f80 extra struct" {
 
 comptime {
     skip: {
-        if (builtin.target.isWasm()) break :skip;
+        if (builtin.cpu.arch.isWasm()) break :skip;
 
         _ = struct {
             export fn zig_f128(x: f128) f128 {

@@ -184,7 +184,7 @@ pub fn resolveTargetQuery(query: Target.Query) DetectError!Target {
     const query_os_tag = query.os_tag orelse builtin.os.tag;
     var os = query_os_tag.defaultVersionRange(query.cpu_arch orelse builtin.cpu.arch);
     if (query.os_tag == null) {
-        switch (builtin.target.os.tag) {
+        switch (builtin.os.tag) {
             .linux => {
                 const uts = posix.uname();
                 const release = mem.sliceTo(&uts.release, 0);
@@ -216,7 +216,7 @@ pub fn resolveTargetQuery(query: Target.Query) DetectError!Target {
             },
             .macos => try darwin.macos.detect(&os),
             .freebsd, .netbsd, .dragonfly => {
-                const key = switch (builtin.target.os.tag) {
+                const key = switch (builtin.os.tag) {
                     .freebsd => "kern.osreldate",
                     .netbsd, .dragonfly => "kern.osrevision",
                     else => unreachable,
@@ -232,7 +232,7 @@ pub fn resolveTargetQuery(query: Target.Query) DetectError!Target {
                     error.Unexpected => return error.OSVersionDetectionFail,
                 };
 
-                switch (builtin.target.os.tag) {
+                switch (builtin.os.tag) {
                     .freebsd => {
                         // https://www.freebsd.org/doc/en_US.ISO8859-1/books/porters-handbook/versions.html
                         // Major * 100,000 has been convention since FreeBSD 2.2 (1997)
@@ -401,7 +401,7 @@ pub fn resolveTargetQuery(query: Target.Query) DetectError!Target {
     }
 
     // https://github.com/llvm/llvm-project/issues/105978
-    if (result.cpu.arch.isArm() and result.floatAbi() == .soft) {
+    if (result.cpu.arch.isArm() and result.abi.float() == .soft) {
         result.cpu.features.removeFeature(@intFromEnum(Target.arm.Feature.vfp2));
     }
 
@@ -542,7 +542,7 @@ pub fn abiAndDynamicLinkerFromFile(
                     }
                 },
                 // We only need this for detecting glibc version.
-                elf.PT_DYNAMIC => if (builtin.target.os.tag == .linux and result.isGnuLibC() and
+                elf.PT_DYNAMIC => if (builtin.os.tag == .linux and result.isGnuLibC() and
                     query.glibc_version == null)
                 {
                     var dyn_off = elfInt(is_64, need_bswap, ph32.p_offset, ph64.p_offset);
@@ -583,7 +583,7 @@ pub fn abiAndDynamicLinkerFromFile(
         }
     }
 
-    if (builtin.target.os.tag == .linux and result.isGnuLibC() and
+    if (builtin.os.tag == .linux and result.isGnuLibC() and
         query.glibc_version == null)
     {
         const shstrndx = elfInt(is_64, need_bswap, hdr32.e_shstrndx, hdr64.e_shstrndx);
@@ -968,9 +968,9 @@ fn detectAbiAndDynamicLinker(
     query: Target.Query,
 ) DetectError!Target {
     const native_target_has_ld = comptime Target.DynamicLinker.kind(builtin.os.tag) != .none;
-    const is_linux = builtin.target.os.tag == .linux;
-    const is_solarish = builtin.target.os.tag.isSolarish();
-    const is_darwin = builtin.target.os.tag.isDarwin();
+    const is_linux = builtin.os.tag == .linux;
+    const is_solarish = builtin.os.tag.isSolarish();
+    const is_darwin = builtin.os.tag.isDarwin();
     const have_all_info = query.dynamic_linker.get() != null and
         query.abi != null and (!is_linux or query.abi.?.isGnu());
     const os_is_non_native = query.os_tag != null;

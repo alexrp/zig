@@ -3897,7 +3897,7 @@ fn createModule(
         }
         create_module.lib_dir_args = undefined; // From here we use lib_directories instead.
 
-        if (resolved_target.is_native_os and target.isDarwin()) {
+        if (resolved_target.is_native_os and target.os.tag.isDarwin()) {
             // If we want to link against frameworks, we need system headers.
             if (create_module.frameworks.count() > 0)
                 create_module.want_native_include_dirs = true;
@@ -3939,7 +3939,7 @@ fn createModule(
             };
         }
 
-        if (builtin.target.os.tag == .windows and (target.abi == .msvc or target.abi == .itanium) and
+        if (builtin.os.tag == .windows and (target.abi == .msvc or target.abi == .itanium) and
             any_name_queries_remaining)
         {
             if (create_module.libc_installation == null) {
@@ -4323,7 +4323,7 @@ fn runOrTestHotSwap(
 ) !std.process.Child.Id {
     const lf = comp.bin_file.?;
 
-    const exe_path = switch (builtin.target.os.tag) {
+    const exe_path = switch (builtin.os.tag) {
         // On Windows it seems impossible to perform an atomic rename of a file that is currently
         // running in a process. Therefore, we do the opposite. We create a copy of the file in
         // tmp zig-cache and use it to spawn the child process. This way we are free to update
@@ -4372,7 +4372,7 @@ fn runOrTestHotSwap(
         try argv.appendSlice(all_args[i..]);
     }
 
-    switch (builtin.target.os.tag) {
+    switch (builtin.os.tag) {
         .macos, .ios, .tvos, .watchos, .visionos => {
             const PosixSpawn = @import("DarwinPosixSpawn.zig");
 

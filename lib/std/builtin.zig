@@ -173,7 +173,7 @@ pub const CallingConvention = union(enum(u8)) {
     /// Functions marked as `extern` or `export` are given this calling convention by default.
     pub const c = builtin.target.cCallingConvention().?;
 
-    pub const winapi: CallingConvention = switch (builtin.target.cpu.arch) {
+    pub const winapi: CallingConvention = switch (builtin.cpu.arch) {
         .x86_64 => .{ .x86_64_win = .{} },
         .x86 => .{ .x86_stdcall = .{} },
         .aarch64 => .{ .aarch64_aapcs_win = .{} },
@@ -181,7 +181,7 @@ pub const CallingConvention = union(enum(u8)) {
         else => unreachable,
     };
 
-    pub const kernel: CallingConvention = switch (builtin.target.cpu.arch) {
+    pub const kernel: CallingConvention = switch (builtin.cpu.arch) {
         .amdgcn => .amdgcn_kernel,
         .nvptx, .nvptx64 => .nvptx_kernel,
         .spirv, .spirv32, .spirv64 => .spirv_kernel,
@@ -199,7 +199,7 @@ pub const CallingConvention = union(enum(u8)) {
     /// Deprecated; use `.@"inline"`.
     pub const Inline: CallingConvention = .@"inline";
     /// Deprecated; use `.x86_64_interrupt`, `.x86_interrupt`, or `.avr_interrupt`.
-    pub const Interrupt: CallingConvention = switch (builtin.target.cpu.arch) {
+    pub const Interrupt: CallingConvention = switch (builtin.cpu.arch) {
         .x86_64 => .{ .x86_64_interrupt = .{} },
         .x86 => .{ .x86_interrupt = .{} },
         .avr => .avr_interrupt,
@@ -212,7 +212,7 @@ pub const CallingConvention = union(enum(u8)) {
     /// Deprecated; use `.x86_fastcall`.
     pub const Fastcall: CallingConvention = .{ .x86_fastcall = .{} };
     /// Deprecated; use `.x86_64_vectorcall`, `.x86_vectorcall`, or `aarch64_vfabi`.
-    pub const Vectorcall: CallingConvention = switch (builtin.target.cpu.arch) {
+    pub const Vectorcall: CallingConvention = switch (builtin.cpu.arch) {
         .x86_64 => .{ .x86_64_vectorcall = .{} },
         .x86 => .{ .x86_vectorcall = .{} },
         .aarch64, .aarch64_be => .{ .aarch64_vfabi = .{} },
@@ -906,7 +906,7 @@ pub const VaList = switch (builtin.cpu.arch) {
     .amdgcn => *u8,
     .avr => *anyopaque,
     .bpfel, .bpfeb => *anyopaque,
-    .hexagon => if (builtin.target.isMusl()) VaListHexagon else *u8,
+    .hexagon => if (builtin.abi.isMusl()) VaListHexagon else *u8,
     .loongarch32, .loongarch64 => *anyopaque,
     .mips, .mipsel, .mips64, .mips64el => *anyopaque,
     .riscv32, .riscv64 => *anyopaque,

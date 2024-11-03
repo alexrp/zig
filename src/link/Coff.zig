@@ -87,7 +87,7 @@ base_relocs: BaseRelocationTable = .{},
 /// Hot-code swapping state.
 hot_state: if (is_hot_update_compatible) HotUpdateState else struct {} = .{},
 
-const is_hot_update_compatible = switch (builtin.target.os.tag) {
+const is_hot_update_compatible = switch (builtin.os.tag) {
     .windows => true,
     else => false,
 };

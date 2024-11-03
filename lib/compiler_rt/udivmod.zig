@@ -71,7 +71,7 @@ fn divwide_generic(comptime T: type, _u1: T, _u0: T, v_: T, r: *T) T {
 
 fn divwide(comptime T: type, _u1: T, _u0: T, v: T, r: *T) T {
     @setRuntimeSafety(is_test);
-    if (T == u64 and builtin.target.cpu.arch == .x86_64 and builtin.target.os.tag != .windows) {
+    if (T == u64 and builtin.cpu.arch == .x86_64 and builtin.os.tag != .windows) {
         var rem: T = undefined;
         const quo = asm (
             \\divq %[v]

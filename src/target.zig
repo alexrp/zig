@@ -11,7 +11,7 @@ pub const default_stack_protector_buffer_size = 4;
 pub fn cannotDynamicLink(target: std.Target) bool {
     return switch (target.os.tag) {
         .freestanding => true,
-        else => target.isSpirV(),
+        else => target.cpu.arch.isSpirV(),
     };
 }
 
@@ -39,12 +39,12 @@ pub fn libcNeedsLibUnwind(target: std.Target) bool {
 }
 
 pub fn requiresPIE(target: std.Target) bool {
-    return target.isAndroid() or target.isDarwin() or target.os.tag == .openbsd;
+    return target.abi.isAndroid() or target.os.tag.isDarwin() or target.os.tag == .openbsd;
 }
 
 /// This function returns whether non-pic code is completely invalid on the given target.
 pub fn requiresPIC(target: std.Target, linking_libc: bool) bool {
-    return target.isAndroid() or
+    return target.abi.isAndroid() or
         target.os.tag == .windows or target.os.tag == .uefi or
         osRequiresLibC(target) or
         (linking_libc and target.isGnuLibC());
@@ -220,7 +220,7 @@ pub fn clangSupportsStackProtector(target: std.Target) bool {
 }
 
 pub fn libcProvidesStackProtector(target: std.Target) bool {
-    return !target.isMinGW() and target.os.tag != .wasi and !target.isSpirV();
+    return !target.isMinGW() and target.os.tag != .wasi and !target.cpu.arch.isSpirV();
 }
 
 pub fn supportsReturnAddress(target: std.Target) bool {
@@ -379,7 +379,7 @@ pub fn clangSupportsNoImplicitFloatArg(target: std.Target) bool {
 }
 
 pub fn needUnwindTables(target: std.Target) bool {
-    return target.os.tag == .windows or target.isDarwin() or std.debug.Dwarf.abi.supportsUnwinding(target);
+    return target.os.tag == .windows or target.os.tag.isDarwin() or std.debug.Dwarf.abi.supportsUnwinding(target);
 }
 
 pub fn defaultAddressSpace(

@@ -81,7 +81,7 @@ pub fn parse(
     }
 
     const os_tag = target.os.tag;
-    if (self.crt_dir == null and !target.isDarwin()) {
+    if (self.crt_dir == null and !os_tag.isDarwin()) {
         log.err("crt_dir may not be empty for {s}", .{@tagName(os_tag)});
         return error.ParseError;
     }
@@ -167,7 +167,7 @@ pub const FindNativeOptions = struct {
 pub fn findNative(args: FindNativeOptions) FindError!LibCInstallation {
     var self: LibCInstallation = .{};
 
-    if (is_darwin and args.target.isDarwin()) {
+    if (is_darwin and args.target.os.tag.isDarwin()) {
         if (!std.zig.system.darwin.isSdkInstalled(args.allocator))
             return error.DarwinSdkNotFound;
         const sdk = std.zig.system.darwin.getSdk(args.allocator, args.target) orelse
@@ -198,14 +198,14 @@ pub fn findNative(args: FindNativeOptions) FindError!LibCInstallation {
         try self.findNativeIncludeDirPosix(args);
         try self.findNativeGccDirHaiku(args);
         self.crt_dir = try args.allocator.dupeZ(u8, "/system/develop/lib");
-    } else if (builtin.target.os.tag.isSolarish()) {
+    } else if (builtin.os.tag.isSolarish()) {
         // There is only one libc, and its headers/libraries are always in the same spot.
         self.include_dir = try args.allocator.dupeZ(u8, "/usr/include");
         self.sys_include_dir = try args.allocator.dupeZ(u8, "/usr/include");
         self.crt_dir = try args.allocator.dupeZ(u8, "/usr/lib/64");
     } else if (std.process.can_spawn) {
         try self.findNativeIncludeDirPosix(args);
-        switch (builtin.target.os.tag) {
+        switch (builtin.os.tag) {
             .freebsd, .netbsd, .openbsd, .dragonfly => self.crt_dir = try args.allocator.dupeZ(u8, "/usr/lib"),
             .linux => try self.findNativeCrtDirPosix(args),
             else => {},
@@ -407,7 +407,7 @@ fn findNativeCrtDirWindows(
     var result_buf = std.ArrayList(u8).init(allocator);
     defer result_buf.deinit();
 
-    const arch_sub_dir = switch (builtin.target.cpu.arch) {
+    const arch_sub_dir = switch (builtin.cpu.arch) {
         .x86 => "x86",
         .x86_64 => "x64",
         .arm, .armeb => "arm",
@@ -444,7 +444,7 @@ fn findNativeCrtDirPosix(self: *LibCInstallation, args: FindNativeOptions) FindE
     self.crt_dir = try ccPrintFileName(.{
         .allocator = args.allocator,
         .search_basename = switch (args.target.os.tag) {
-            .linux => if (args.target.isAndroid()) "crtbegin_dynamic.o" else "crt1.o",
+            .linux => if (args.target.abi.isAndroid()) "crtbegin_dynamic.o" else "crt1.o",
             else => "crt1.o",
         },
         .want_dirname = .only_dir,
@@ -474,7 +474,7 @@ fn findNativeKernel32LibDir(
     var result_buf = std.ArrayList(u8).init(allocator);
     defer result_buf.deinit();
 
-    const arch_sub_dir = switch (builtin.target.cpu.arch) {
+    const arch_sub_dir = switch (builtin.cpu.arch) {
         .x86 => "x86",
         .x86_64 => "x64",
         .arm, .armeb => "arm",
@@ -734,7 +734,7 @@ pub const CrtBasenames = struct {
 
         const target = args.target;
 
-        if (target.isAndroid()) return switch (mode) {
+        if (target.abi.isAndroid()) return switch (mode) {
             .dynamic_lib => .{
                 .crtbegin = "crtbegin_so.o",
                 .crtend = "crtend_so.o",
@@ -1025,8 +1025,8 @@ const fs = std.fs;
 const Allocator = std.mem.Allocator;
 const Path = std.Build.Cache.Path;
 
-const is_darwin = builtin.target.isDarwin();
-const is_windows = builtin.target.os.tag == .windows;
-const is_haiku = builtin.target.os.tag == .haiku;
+const is_darwin = builtin.os.tag.isDarwin();
+const is_windows = builtin.os.tag == .windows;
+const is_haiku = builtin.os.tag == .haiku;
 
 const log = std.log.scoped(.libc_installation);

@@ -509,7 +509,7 @@ fn ArithmeticConversion(comptime A: type, comptime B: type) type {
 
 test "ArithmeticConversion" {
     // Promotions not necessarily the same for other platforms
-    if (builtin.target.cpu.arch != .x86_64 or builtin.target.os.tag != .linux) return error.SkipZigTest;
+    if (builtin.cpu.arch != .x86_64 or builtin.os.tag != .linux) return error.SkipZigTest;
 
     const Test = struct {
         /// Order of operands should not matter for arithmetic conversions

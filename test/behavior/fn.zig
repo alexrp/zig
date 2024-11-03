@@ -153,9 +153,9 @@ test "extern struct with stdcallcc fn pointer" {
     if (builtin.zig_backend == .stage2_spirv64) return error.SkipZigTest;
 
     const S = extern struct {
-        ptr: *const fn () callconv(if (builtin.target.cpu.arch == .x86) .Stdcall else .C) i32,
+        ptr: *const fn () callconv(if (builtin.cpu.arch == .x86) .Stdcall else .C) i32,
 
-        fn foo() callconv(if (builtin.target.cpu.arch == .x86) .Stdcall else .C) i32 {
+        fn foo() callconv(if (builtin.cpu.arch == .x86) .Stdcall else .C) i32 {
             return 1234;
         }
     };

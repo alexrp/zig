@@ -607,7 +607,7 @@ test parse {
 
         try std.testing.expectEqualSlices(u8, "native-native-gnu.2.1.1", text);
     }
-    if (builtin.target.abi.isAndroid()) {
+    if (builtin.abi.isAndroid()) {
         var query = try Query.parse(.{});
         query.android_api_level = 30;
 

@@ -26,7 +26,7 @@ const windows = std.os.windows;
 const os = std.os;
 const fs = std.fs;
 const process = std.process;
-const native_os = builtin.target.os.tag;
+const native_os = builtin.os.tag;
 
 pub const sep_windows = '\\';
 pub const sep_posix = '/';

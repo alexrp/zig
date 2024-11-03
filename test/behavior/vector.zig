@@ -986,7 +986,7 @@ test "saturating multiplication" {
     if (builtin.zig_backend == .stage2_riscv64) return error.SkipZigTest;
 
     // TODO: once #9660 has been solved, remove this line
-    if (builtin.target.cpu.arch == .wasm32) return error.SkipZigTest;
+    if (builtin.cpu.arch == .wasm32) return error.SkipZigTest;
 
     const S = struct {
         fn doTheTest() !void {

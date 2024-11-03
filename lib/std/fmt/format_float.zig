@@ -1523,7 +1523,7 @@ fn check(comptime T: type, value: T, comptime expected: []const u8) !void {
     const s = try formatFloat(&buf, value, .{});
     try std.testing.expectEqualStrings(expected, s);
 
-    if (T == f80 and builtin.target.os.tag == .windows and builtin.target.cpu.arch == .x86_64) return;
+    if (T == f80 and builtin.os.tag == .windows and builtin.cpu.arch == .x86_64) return;
 
     const o = try std.fmt.parseFloat(T, s);
     const o_bits: I = @bitCast(o);

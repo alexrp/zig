@@ -44,7 +44,7 @@ test "switch simple" {
 }
 
 // Switch expressions can be used outside a function:
-const os_msg = switch (builtin.target.os.tag) {
+const os_msg = switch (builtin.os.tag) {
     .linux => "we found a linux user",
     else => "not a linux user",
 };
@@ -52,7 +52,7 @@ const os_msg = switch (builtin.target.os.tag) {
 // Inside a function, switch statements implicitly are compile-time
 // evaluated if the target expression is compile-time known.
 test "switch inside function" {
-    switch (builtin.target.os.tag) {
+    switch (builtin.os.tag) {
         .fuchsia => {
             // On an OS other than fuchsia, block is not even analyzed,
             // so this compile error is not triggered.

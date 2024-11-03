@@ -220,7 +220,7 @@ fn testReadLinkAbsolute(target_path: []const u8, symlink_path: []const u8) !void
 test "File.stat on a File that is a symlink returns Kind.sym_link" {
     // This test requires getting a file descriptor of a symlink which
     // is not possible on all targets
-    switch (builtin.target.os.tag) {
+    switch (builtin.os.tag) {
         .windows, .linux => {},
         else => return error.SkipZigTest,
     }
@@ -232,7 +232,7 @@ test "File.stat on a File that is a symlink returns Kind.sym_link" {
 
             try setupSymlink(ctx.dir, dir_target_path, "symlink", .{ .is_directory = true });
 
-            var symlink = switch (builtin.target.os.tag) {
+            var symlink = switch (builtin.os.tag) {
                 .windows => windows_symlink: {
                     const sub_path_w = try windows.cStrToPrefixedFileW(ctx.dir.fd, "symlink");
 

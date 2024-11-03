@@ -7,7 +7,7 @@ pub fn doClientRequest(default: usize, request: usize, a1: usize, a2: usize, a3:
         return default;
     }
 
-    switch (builtin.target.cpu.arch) {
+    switch (builtin.cpu.arch) {
         .x86 => {
             return asm volatile (
                 \\ roll $3,  %%edi ; roll $13, %%edi

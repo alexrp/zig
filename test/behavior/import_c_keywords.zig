@@ -79,7 +79,7 @@ test "import c keywords" {
     ptr_id = &an_alias_of_some_non_c_keyword_constant;
     try std.testing.expect(ptr_id == &some_non_c_keyword_constant);
 
-    if (builtin.target.ofmt != .coff and builtin.target.os.tag != .windows) {
+    if (builtin.target.ofmt != .coff and builtin.os.tag != .windows) {
         var ptr_fn: *const fn () callconv(.C) Id = &double;
         try std.testing.expect(ptr_fn == &float);
         ptr_fn = &an_alias_of_float;

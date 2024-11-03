@@ -2230,7 +2230,7 @@ test "float.special" {
     try expectFmt("f64: nan", "f64: {}", .{math.nan(f64)});
     // negative nan is not defined by IEE 754,
     // and ARM thus normalizes it to positive nan
-    if (builtin.target.cpu.arch != .arm) {
+    if (builtin.cpu.arch != .arm) {
         try expectFmt("f64: -nan", "f64: {}", .{-math.nan(f64)});
     }
     try expectFmt("f64: inf", "f64: {}", .{math.inf(f64)});
@@ -2241,7 +2241,7 @@ test "float.hexadecimal.special" {
     try expectFmt("f64: nan", "f64: {x}", .{math.nan(f64)});
     // negative nan is not defined by IEE 754,
     // and ARM thus normalizes it to positive nan
-    if (builtin.target.cpu.arch != .arm) {
+    if (builtin.cpu.arch != .arm) {
         try expectFmt("f64: -nan", "f64: {x}", .{-math.nan(f64)});
     }
     try expectFmt("f64: inf", "f64: {x}", .{math.inf(f64)});
@@ -2594,7 +2594,7 @@ test "positional/alignment/width/precision" {
 }
 
 test "vector" {
-    if (builtin.target.cpu.arch == .riscv64) {
+    if (builtin.cpu.arch == .riscv64) {
         // https://github.com/ziglang/zig/issues/4486
         return error.SkipZigTest;
     }

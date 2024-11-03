@@ -1745,7 +1745,7 @@ pub fn create(gpa: Allocator, arena: Allocator, options: CreateOptions) !*Compil
             if (comp.config.link_libc and is_exe_or_dyn_lib) {
                 // If the "is darwin" check is moved below the libc_installation check below,
                 // error.LibCInstallationMissingCrtDir is returned from lci.resolveCrtPaths().
-                if (target.isDarwin()) {
+                if (target.os.tag.isDarwin()) {
                     switch (target.abi) {
                         .none, .simulator, .macabi => {},
                         else => return error.LibCUnavailable,
@@ -1826,7 +1826,7 @@ pub fn create(gpa: Allocator, arena: Allocator, options: CreateOptions) !*Compil
                     // When linking mingw-w64 there are some import libs we always need.
                     try comp.windows_libs.ensureUnusedCapacity(gpa, mingw.always_link_libs.len);
                     for (mingw.always_link_libs) |name| comp.windows_libs.putAssumeCapacity(name, {});
-                } else if (target.isDarwin()) {
+                } else if (target.os.tag.isDarwin()) {
                     switch (target.abi) {
                         .none, .simulator, .macabi => {},
                         else => return error.LibCUnavailable,
@@ -5655,7 +5655,7 @@ pub fn addCCArgs(
 
     // We might want to support -mfloat-abi=softfp for Arm and CSKY here in the future.
     if (target_util.clangSupportsFloatAbiArg(target)) {
-        const fabi = @tagName(target.floatAbi());
+        const fabi = @tagName(target.abi.float());
 
         try argv.append(switch (target.cpu.arch) {
             // For whatever reason, Clang doesn't support `-mfloat-abi` for s390x.
@@ -5664,12 +5664,12 @@ pub fn addCCArgs(
         });
     }
 
-    if (target_util.clangSupportsNoImplicitFloatArg(target) and target.floatAbi() == .soft) {
+    if (target_util.clangSupportsNoImplicitFloatArg(target) and target.abi.float() == .soft) {
         try argv.append("-mno-implicit-float");
     }
 
     // https://github.com/llvm/llvm-project/issues/105972
-    if (target.cpu.arch.isPowerPC() and target.floatAbi() == .soft) {
+    if (target.cpu.arch.isPowerPC() and target.abi.float() == .soft) {
         try argv.append("-D__NO_FPRS__");
         try argv.append("-D_SOFT_FLOAT");
         try argv.append("-D_SOFT_DOUBLE");

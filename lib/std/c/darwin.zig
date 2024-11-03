@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const native_arch = builtin.target.cpu.arch;
+const native_arch = builtin.cpu.arch;
 const assert = std.debug.assert;
 const AF = std.c.AF;
 const PROT = std.c.PROT;
@@ -977,7 +977,7 @@ pub const kevent64_s = extern struct {
 // to make sure the struct is laid out the same. These values were
 // produced from C code using the offsetof macro.
 comptime {
-    if (builtin.target.isDarwin()) {
+    if (builtin.os.tag.isDarwin()) {
         assert(@offsetOf(kevent64_s, "ident") == 0);
         assert(@offsetOf(kevent64_s, "filter") == 8);
         assert(@offsetOf(kevent64_s, "flags") == 10);

@@ -166,7 +166,7 @@ export fn derp() i32 {
 
 test "rw constraint (x86_64)" {
     if (builtin.zig_backend == .stage2_c) return error.SkipZigTest;
-    if (builtin.target.cpu.arch != .x86_64) return error.SkipZigTest;
+    if (builtin.cpu.arch != .x86_64) return error.SkipZigTest;
 
     var res: i32 = 5;
     asm ("addl %[b], %[a]"
@@ -178,7 +178,7 @@ test "rw constraint (x86_64)" {
 }
 
 test "asm modifiers (AArch64)" {
-    if (builtin.target.cpu.arch != .aarch64) return error.SkipZigTest;
+    if (builtin.cpu.arch != .aarch64) return error.SkipZigTest;
     if (builtin.zig_backend == .stage2_aarch64) return error.SkipZigTest; // TODO
 
     if (builtin.zig_backend == .stage2_c and builtin.os.tag == .windows) return error.SkipZigTest; // MSVC doesn't support inline assembly

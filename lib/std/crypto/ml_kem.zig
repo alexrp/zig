@@ -1219,7 +1219,7 @@ const Poly = struct {
         // buf is interpreted as a₁…a_ηb₁…b_ηa₁…a_ηb₁…b_η…. We process
         // multiple coefficients in one batch.
 
-        const T = switch (builtin.target.cpu.arch) {
+        const T = switch (builtin.cpu.arch) {
             .x86_64, .x86 => u32, // Generates better code on Intel CPUs
             else => u64, // u128 might be faster on some other CPUs.
         };

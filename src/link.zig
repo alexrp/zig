@@ -1304,7 +1304,7 @@ pub const File = struct {
         // with 0o755 permissions, but it works appropriately if the system is configured
         // more leniently. As another data point, C's fopen seems to open files with the
         // 666 mode.
-        const executable_mode = if (builtin.target.os.tag == .windows) 0 else 0o777;
+        const executable_mode = if (builtin.os.tag == .windows) 0 else 0o777;
         switch (effectiveOutputMode(use_lld, output_mode)) {
             .Lib => return switch (link_mode) {
                 .dynamic => executable_mode,
@@ -2025,7 +2025,7 @@ fn resolveLibInput(
 
     const lib_name = name_query.name;
 
-    if (target.isDarwin() and link_mode == .dynamic) tbd: {
+    if (target.os.tag.isDarwin() and link_mode == .dynamic) tbd: {
         // Prefer .tbd over .dylib.
         const test_path: Path = .{
             .root_dir = lib_directory,
@@ -2062,7 +2062,7 @@ fn resolveLibInput(
 
     // In the case of Darwin, the main check will be .dylib, so here we
     // additionally check for .so files.
-    if (target.isDarwin() and link_mode == .dynamic) so: {
+    if (target.os.tag.isDarwin() and link_mode == .dynamic) so: {
         const test_path: Path = .{
             .root_dir = lib_directory,
             .sub_path = try std.fmt.allocPrint(arena, "lib{s}.so", .{lib_name}),

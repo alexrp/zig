@@ -579,7 +579,7 @@ pub const Installation = struct {
         };
         defer options_key.closeKey();
 
-        const option_name = comptime switch (builtin.target.cpu.arch) {
+        const option_name = comptime switch (builtin.cpu.arch) {
             .thumb => "OptionId.DesktopCPParm",
             .aarch64 => "OptionId.DesktopCPParm64",
             .x86 => "OptionId.DesktopCPPx86",
@@ -823,7 +823,7 @@ const MsvcLibDir = struct {
         lib_dir_buf.shrinkRetainingCapacity(installation_path_with_trailing_sep_len);
         try lib_dir_buf.appendSlice("VC\\Tools\\MSVC\\");
         try lib_dir_buf.appendSlice(default_tools_version);
-        const folder_with_arch = "\\Lib\\" ++ comptime switch (builtin.target.cpu.arch) {
+        const folder_with_arch = "\\Lib\\" ++ comptime switch (builtin.cpu.arch) {
             .thumb => "arm",
             .aarch64 => "arm64",
             .x86 => "x86",
@@ -908,7 +908,7 @@ const MsvcLibDir = struct {
                 msvc_dir.shrinkRetainingCapacity(msvc_dir.items.len - "\\include".len);
             }
 
-            const folder_with_arch = "\\Lib\\" ++ comptime switch (builtin.target.cpu.arch) {
+            const folder_with_arch = "\\Lib\\" ++ comptime switch (builtin.cpu.arch) {
                 .thumb => "arm",
                 .aarch64 => "arm64",
                 .x86 => "x86",
@@ -976,7 +976,7 @@ const MsvcLibDir = struct {
         };
         errdefer base_path.deinit();
 
-        const folder_with_arch = "\\VC\\lib\\" ++ comptime switch (builtin.target.cpu.arch) {
+        const folder_with_arch = "\\VC\\lib\\" ++ comptime switch (builtin.cpu.arch) {
             .thumb => "arm",
             .aarch64 => "arm64",
             .x86 => "", //x86 is in the root of the Lib folder

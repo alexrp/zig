@@ -348,7 +348,7 @@ test "Value.bitToggle" {
 
 /// Signals to the processor that the caller is inside a busy-wait spin-loop.
 pub inline fn spinLoopHint() void {
-    switch (builtin.target.cpu.arch) {
+    switch (builtin.cpu.arch) {
         // No-op instruction that can hint to save (or share with a hardware-thread)
         // pipelining/power resources
         // https://software.intel.com/content/www/us/en/develop/articles/benefitting-power-and-performance-sleep-loops.html

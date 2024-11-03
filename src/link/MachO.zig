@@ -3513,7 +3513,7 @@ pub fn getTarget(self: MachO) std.Target {
 pub fn invalidateKernelCache(dir: fs.Dir, sub_path: []const u8) !void {
     const tracy = trace(@src());
     defer tracy.end();
-    if (comptime builtin.target.isDarwin() and builtin.target.cpu.arch == .aarch64) {
+    if (comptime builtin.os.tag.isDarwin() and builtin.cpu.arch == .aarch64) {
         try dir.copyFile(sub_path, dir, sub_path, .{});
     }
 }
@@ -4002,7 +4002,7 @@ fn formatSectType(
     try writer.print("{s}", .{name});
 }
 
-const is_hot_update_compatible = switch (builtin.target.os.tag) {
+const is_hot_update_compatible = switch (builtin.os.tag) {
     .macos => true,
     else => false,
 };

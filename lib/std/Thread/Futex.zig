@@ -80,7 +80,7 @@ else if (builtin.os.tag == .openbsd)
     OpenbsdImpl
 else if (builtin.os.tag == .dragonfly)
     DragonflyImpl
-else if (builtin.target.isWasm())
+else if (builtin.cpu.arch.isWasm())
     WasmImpl
 else if (std.Thread.use_pthreads)
     PosixImpl
@@ -100,7 +100,7 @@ const UnsupportedImpl = struct {
 
     fn unsupported(unused: anytype) noreturn {
         _ = unused;
-        @compileError("Unsupported operating system " ++ @tagName(builtin.target.os.tag));
+        @compileError("Unsupported operating system " ++ @tagName(builtin.os.tag));
     }
 };
 
@@ -180,7 +180,7 @@ const DarwinImpl = struct {
         //
         // ulock_wait() uses 32-bit micro-second timeouts where 0 = INFINITE or no-timeout
         // ulock_wait2() uses 64-bit nano-second timeouts (with the same convention)
-        const supports_ulock_wait2 = builtin.target.os.version_range.semver.min.major >= 11;
+        const supports_ulock_wait2 = builtin.os.version_range.semver.min.major >= 11;
 
         var timeout_ns: u64 = 0;
         if (timeout) |delay| {

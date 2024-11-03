@@ -265,7 +265,7 @@ pub fn main() !void {
 
 fn getIncludePaths(arena: std.mem.Allocator, auto_includes_option: cli.Options.AutoIncludes, zig_lib_dir: []const u8) ![]const []const u8 {
     var includes = auto_includes_option;
-    if (builtin.target.os.tag != .windows) {
+    if (builtin.os.tag != .windows) {
         switch (includes) {
             // MSVC can't be found when the host isn't Windows, so short-circuit.
             .msvc => return error.MsvcIncludesNotFound,
@@ -282,7 +282,7 @@ fn getIncludePaths(arena: std.mem.Allocator, auto_includes_option: cli.Options.A
                 // MSVC is only detectable on Windows targets. This unreachable is to signify
                 // that .any and .msvc should be dealt with on non-Windows targets before this point,
                 // since getting MSVC include paths uses Windows-only APIs.
-                if (builtin.target.os.tag != .windows) unreachable;
+                if (builtin.os.tag != .windows) unreachable;
 
                 const target_query: std.Target.Query = .{
                     .os_tag = .windows,
