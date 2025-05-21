@@ -9,7 +9,6 @@ const print = std.debug.print;
 const mem = std.mem;
 const testing = std.testing;
 const Allocator = std.mem.Allocator;
-const getExternalExecutor = std.zig.system.getExternalExecutor;
 const fatal = std.zig.fatal;
 
 const max_doc_file_size = 10 * 1024 * 1024;

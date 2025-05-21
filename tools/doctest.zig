@@ -6,7 +6,6 @@ const fs = std.fs;
 const process = std.process;
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
-const getExternalExecutor = std.zig.system.getExternalExecutor;
 
 const max_doc_file_size = 10 * 1024 * 1024;
 
@@ -309,11 +308,11 @@ fn printOutput(
                 const target = try std.zig.system.resolveTargetQuery(
                     target_query,
                 );
-                switch (getExternalExecutor(host, &target, .{
-                    .link_libc = code.link_libc,
-                })) {
+                switch (try std.zig.system.getExternalExecutor(arena, &host, &target, .{})) {
                     .native => {},
-                    else => {
+                    .native_dl_sysroot => unreachable,
+                    inline else => |ex, t| {
+                        if (t == .qemu) std.debug.assert(ex.dl_sysroot == null);
                         try test_args.appendSlice(&[_][]const u8{"--test-no-exec"});
                         try shell_out.writeAll("--test-no-exec");
                     },
@@ -1483,7 +1482,7 @@ test "printShell" {
         // intentional space after "--build-option1 \"
         const shell_out =
             \\$ zig build test.zig \
-            \\ --build-option1 \ 
+            \\ --build-option1 \
             \\ --build-option2
             \\$ ./test
         ;

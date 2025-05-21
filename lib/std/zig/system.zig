@@ -5,9 +5,15 @@ pub const darwin = @import("system/darwin.zig");
 pub const linux = @import("system/linux.zig");
 
 pub const Executor = union(enum) {
-    native,
+    native: []const u8,
+    /// Must be freed by caller.
+    native_dl_sysroot: []const u8,
     rosetta,
-    qemu: []const u8,
+    qemu: struct {
+        bin_name: []const u8,
+        /// If non-null, must be freed by caller.
+        dl_sysroot: ?[]const u8,
+    },
     wine: []const u8,
     wasmtime: []const u8,
     darling: []const u8,
@@ -21,17 +27,19 @@ pub const GetExternalExecutorOptions = struct {
     allow_rosetta: bool = true,
     allow_wasmtime: bool = true,
     allow_wine: bool = true,
-    qemu_fixes_dl: bool = false,
-    link_libc: bool = false,
+    needs_dynamic_linker: bool,
+    libc_runtimes_dir: ?[]const u8 = null,
 };
 
-/// Return whether or not the given host is capable of running executables of
-/// the other target.
+/// Return whether or not the given host is capable of running executables of the other target.
+///
+/// Caller must free memory in the returned `Executor` in some cases.
 pub fn getExternalExecutor(
-    host: std.Target,
+    allocator: mem.Allocator,
+    host: *const std.Target,
     candidate: *const std.Target,
     options: GetExternalExecutorOptions,
-) Executor {
+) mem.Allocator.Error!Executor {
     const os_match = host.os.tag == candidate.os.tag;
     const cpu_ok = cpu_ok: {
         if (host.cpu.arch == candidate.cpu.arch)
@@ -53,18 +61,40 @@ pub fn getExternalExecutor(
         break :cpu_ok false;
     };
 
-    var bad_result: Executor = .bad_os_or_cpu;
+    const dl_sysroot: ?[]const u8 = if (options.needs_dynamic_linker) blk: {
+        const candidate_dl = candidate.dynamic_linker.get().?;
 
-    if (os_match and cpu_ok) native: {
-        if (options.link_libc) {
-            if (candidate.dynamic_linker.get()) |candidate_dl| {
-                fs.cwd().access(candidate_dl, .{}) catch {
-                    bad_result = .{ .bad_dl = candidate_dl };
-                    break :native;
-                };
-            }
+        if (options.libc_runtimes_dir) |runtimes_dir| rt: {
+            const triple = try if (candidate.isGnuLibC()) std.zig.target.glibcRuntimeTriple(
+                allocator,
+                candidate.cpu.arch,
+                candidate.os.tag,
+                candidate.abi,
+            ) else if (candidate.isMuslLibC()) std.zig.target.muslRuntimeTriple(
+                allocator,
+                candidate.cpu.arch,
+                candidate.abi,
+            ) else candidate.linuxTriple(allocator);
+            defer allocator.free(triple);
+
+            const dl_sysroot = try fs.path.join(allocator, .{ runtimes_dir, triple });
+            errdefer allocator.free(dl_sysroot);
+
+            const dl_path = try std.fmt.allocPrint(allocator, "{s}{s}", .{ dl_sysroot, candidate_dl });
+            defer allocator.free(dl_path);
+
+            fs.cwd().access(dl_path) catch break :rt;
+
+            break :blk dl_sysroot;
         }
-        return .native;
+
+        fs.cwd().access(candidate_dl, .{}) catch return .{ .bad_dl = candidate_dl };
+
+        break :blk null;
+    } else null;
+
+    if (os_match and cpu_ok) {
+        return if (dl_sysroot) |s| .{ .native_dl_sysroot = s } else .native;
     }
 
     // If the OS match and OS is macOS and CPU is arm64, we can use Rosetta 2
@@ -72,94 +102,93 @@ pub fn getExternalExecutor(
     if (options.allow_rosetta and os_match and
         host.os.tag == .macos and host.cpu.arch == .aarch64)
     {
-        switch (candidate.cpu.arch) {
-            .x86_64 => return .rosetta,
-            else => return bad_result,
-        }
+        return switch (candidate.cpu.arch) {
+            .x86_64 => .rosetta,
+            else => .bad_os_or_cpu,
+        };
     }
 
     // If the OS matches, we can use QEMU to emulate a foreign architecture.
-    if (options.allow_qemu and os_match and (!cpu_ok or options.qemu_fixes_dl)) {
-        return switch (candidate.cpu.arch) {
-            .aarch64 => Executor{ .qemu = "qemu-aarch64" },
-            .aarch64_be => Executor{ .qemu = "qemu-aarch64_be" },
-            .arm, .thumb => Executor{ .qemu = "qemu-arm" },
-            .armeb, .thumbeb => Executor{ .qemu = "qemu-armeb" },
-            .hexagon => Executor{ .qemu = "qemu-hexagon" },
-            .loongarch64 => Executor{ .qemu = "qemu-loongarch64" },
-            .m68k => Executor{ .qemu = "qemu-m68k" },
-            .mips => Executor{ .qemu = "qemu-mips" },
-            .mipsel => Executor{ .qemu = "qemu-mipsel" },
-            .mips64 => Executor{
-                .qemu = switch (candidate.abi) {
-                    .gnuabin32, .muslabin32 => "qemu-mipsn32",
-                    else => "qemu-mips64",
+    if (options.allow_qemu and os_match) {
+        return .{
+            .qemu = .{
+                .bin_name = switch (candidate.cpu.arch) {
+                    inline .aarch64,
+                    .aarch64_be,
+                    .arm,
+                    .armeb,
+                    .hexagon,
+                    .loongarch64,
+                    .m68k,
+                    .mips,
+                    .mipsel,
+                    .riscv32,
+                    .riscv64,
+                    .s390x,
+                    .sparc64,
+                    .xtensa,
+                    => |t| "qemu-" ++ @tagName(t),
+
+                    .thumb => "qemu-arm",
+                    .thumbeb => "qemu-armeb",
+                    .mips64 => switch (candidate.abi) {
+                        .gnuabin32, .muslabin32 => "qemu-mipsn32",
+                        else => "qemu-mips64",
+                    },
+                    .mips64el => switch (candidate.abi) {
+                        .gnuabin32, .muslabin32 => "qemu-mipsn32el",
+                        else => "qemu-mips64el",
+                    },
+                    .powerpc => "qemu-ppc",
+                    .powerpc64 => "qemu-ppc64",
+                    .powerpc64le => "qemu-ppc64le",
+                    .sparc => if (std.Target.sparc.featureSetHas(candidate.cpu.features, .v9))
+                        "qemu-sparc32plus"
+                    else
+                        "qemu-sparc",
+                    .x86 => "qemu-i386",
+                    .x86_64 => switch (candidate.abi) {
+                        .gnux32, .muslx32 => return .bad_os_or_cpu, // No qemu-x32 exists.
+                        else => "qemu-x86_64",
+                    },
+                    else => return .bad_os_or_cpu, // No known QEMU port exists.
                 },
+                .dl_sysroot = dl_sysroot,
             },
-            .mips64el => Executor{
-                .qemu = switch (candidate.abi) {
-                    .gnuabin32, .muslabin32 => "qemu-mipsn32el",
-                    else => "qemu-mips64el",
-                },
-            },
-            .powerpc => Executor{ .qemu = "qemu-ppc" },
-            .powerpc64 => Executor{ .qemu = "qemu-ppc64" },
-            .powerpc64le => Executor{ .qemu = "qemu-ppc64le" },
-            .riscv32 => Executor{ .qemu = "qemu-riscv32" },
-            .riscv64 => Executor{ .qemu = "qemu-riscv64" },
-            .s390x => Executor{ .qemu = "qemu-s390x" },
-            .sparc => Executor{
-                .qemu = if (std.Target.sparc.featureSetHas(candidate.cpu.features, .v9))
-                    "qemu-sparc32plus"
-                else
-                    "qemu-sparc",
-            },
-            .sparc64 => Executor{ .qemu = "qemu-sparc64" },
-            .x86 => Executor{ .qemu = "qemu-i386" },
-            .x86_64 => switch (candidate.abi) {
-                .gnux32, .muslx32 => return bad_result,
-                else => Executor{ .qemu = "qemu-x86_64" },
-            },
-            .xtensa => Executor{ .qemu = "qemu-xtensa" },
-            else => return bad_result,
         };
     }
 
     if (options.allow_wasmtime and candidate.cpu.arch.isWasm()) {
-        return Executor{ .wasmtime = "wasmtime" };
+        return .{ .wasmtime = "wasmtime" };
     }
 
-    switch (candidate.os.tag) {
-        .windows => {
-            if (options.allow_wine) {
-                const wine_supported = switch (candidate.cpu.arch) {
-                    .thumb => switch (host.cpu.arch) {
-                        .arm, .thumb, .aarch64 => true,
-                        else => false,
-                    },
-                    .aarch64 => host.cpu.arch == .aarch64,
-                    .x86 => host.cpu.arch.isX86(),
-                    .x86_64 => host.cpu.arch == .x86_64,
+    return switch (candidate.os.tag) {
+        .windows => if (options.allow_wine) blk: {
+            const wine_supported = switch (candidate.cpu.arch) {
+                .thumb => switch (host.cpu.arch) {
+                    .arm, .thumb, .aarch64 => true,
                     else => false,
-                };
-                return if (wine_supported) Executor{ .wine = "wine" } else bad_result;
-            }
-            return bad_result;
-        },
-        .driverkit, .macos => {
-            if (options.allow_darling) {
-                // This check can be loosened once darling adds a QEMU-based emulation
-                // layer for non-host architectures:
-                // https://github.com/darlinghq/darling/issues/863
-                if (candidate.cpu.arch != host.cpu.arch) {
-                    return bad_result;
-                }
-                return Executor{ .darling = "darling" };
-            }
-            return bad_result;
-        },
-        else => return bad_result,
-    }
+                },
+                .aarch64 => host.cpu.arch == .aarch64,
+                .x86 => host.cpu.arch.isX86(),
+                .x86_64 => host.cpu.arch == .x86_64,
+                else => false,
+            };
+
+            break :blk if (wine_supported) .{ .wine = "wine" } else .bad_os_or_cpu;
+        } else .bad_os_or_cpu,
+        .driverkit, .macos => if (options.allow_darling)
+            // This check can be loosened once darling adds a QEMU-based emulation
+            // layer for non-host architectures:
+            // https://github.com/darlinghq/darling/issues/863
+            if (candidate.cpu.arch == host.cpu.arch)
+                .{ .darling = "darling" }
+            else
+                .bad_os_or_cpu
+        else
+            .bad_os_or_cpu,
+        else => .bad_os_or_cpu,
+    };
 }
 
 pub const DetectError = error{

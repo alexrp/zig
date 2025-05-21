@@ -59,7 +59,7 @@ pub fn main() !void {
     if (opt_lib_dir == null) {
         for (case.targets) |target| {
             if (target.backend == .cbe) {
-                fatal("'--zig-lib-dir' requried when using backend 'cbe'", .{});
+                fatal("'--zig-lib-dir' required when using backend 'cbe'", .{});
             }
         }
     }

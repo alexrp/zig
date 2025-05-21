@@ -3777,7 +3777,6 @@ fn buildOutputType(
             &comp_destroyed,
             all_args,
             runtime_args_start,
-            create_module.resolved_options.link_libc,
         );
     }
 
@@ -4322,7 +4321,6 @@ fn runOrTest(
     comp_destroyed: *bool,
     all_args: []const []const u8,
     runtime_args_start: ?usize,
-    link_libc: bool,
 ) !void {
     const lf = comp.bin_file orelse return;
     // A naive `directory.join` here will indeed get the correct path to the binary,
@@ -4359,7 +4357,9 @@ fn runOrTest(
         std.debug.lockStdErr();
         const err = process.execve(gpa, argv.items, &env_map);
         std.debug.unlockStdErr();
-        try warnAboutForeignBinaries(arena, arg_mode, target, link_libc);
+        if (err == error.InvalidExe or err == error.FileNotFound) {
+            try warnAboutForeignBinaries(arena, arg_mode, target, err == error.FileNotFound);
+        }
         const cmd = try std.mem.join(arena, " ", argv.items);
         fatal("the following command failed to execve with '{s}':\n{s}", .{ @errorName(err), cmd });
     } else if (process.can_spawn) {
@@ -4380,7 +4380,9 @@ fn runOrTest(
             break :t child.spawnAndWait();
         };
         const term = term_result catch |err| {
-            try warnAboutForeignBinaries(arena, arg_mode, target, link_libc);
+            if (err == error.InvalidExe or err == error.FileNotFound) {
+                try warnAboutForeignBinaries(arena, arg_mode, target, err == error.FileNotFound);
+            }
             const cmd = try std.mem.join(arena, " ", argv.items);
             fatal("the following command failed with '{s}':\n{s}", .{ @errorName(err), cmd });
         };
@@ -6575,13 +6577,19 @@ fn warnAboutForeignBinaries(
     arena: Allocator,
     arg_mode: ArgMode,
     target: *const std.Target,
-    link_libc: bool,
+    file_not_found: bool,
 ) !void {
     const host_query: std.Target.Query = .{};
     const host_target = std.zig.resolveTargetQueryOrFatal(host_query);
 
-    switch (std.zig.system.getExternalExecutor(host_target, target, .{ .link_libc = link_libc })) {
+    switch (try std.zig.system.getExternalExecutor(arena, &host_target, target, .{
+        // This is the best indication we currently have of whether the executable needs a
+        // dynamic linker. A better approach would be to peek at the file on disk to see if
+        // it has a `DT_INTERP` entry.
+        .needs_dynamic_linker = !target.dynamic_linker.eql(.none) and (target.requiresLibC() or file_not_found),
+    })) {
         .native => return,
+        .native_dl_sysroot => unreachable,
         .rosetta => {
             const host_name = try host_target.zigTriple(arena);
             const foreign_name = try target.zigTriple(arena);
@@ -6590,6 +6598,7 @@ fn warnAboutForeignBinaries(
             });
         },
         .qemu => |qemu| {
+            assert(qemu.dl_sysroot == null);
             const host_name = try host_target.zigTriple(arena);
             const foreign_name = try target.zigTriple(arena);
             switch (arg_mode) {
@@ -6597,12 +6606,12 @@ fn warnAboutForeignBinaries(
                     "the host system ({s}) does not appear to be capable of executing binaries " ++
                         "from the target ({s}). Consider using '--test-cmd {s} --test-cmd-bin' " ++
                         "to run the tests",
-                    .{ host_name, foreign_name, qemu },
+                    .{ host_name, foreign_name, qemu.bin_name },
                 ),
                 else => warn(
                     "the host system ({s}) does not appear to be capable of executing binaries " ++
                         "from the target ({s}). Consider using '{s}' to run the binary",
-                    .{ host_name, foreign_name, qemu },
+                    .{ host_name, foreign_name, qemu.bin_name },
                 ),
             }
         },

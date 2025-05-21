@@ -708,7 +708,7 @@ pub fn lowerToBuildSteps(
             },
             .Execution => |expected_stdout| no_exec: {
                 const run = if (case.target.result.ofmt == .c) run_step: {
-                    if (getExternalExecutor(host, &case.target.result, .{ .link_libc = true }) != .native) {
+                    if (try std.zig.system.getExternalExecutor(b.allocator, &host, &case.target.result, .{}) != .native) {
                         // We wouldn't be able to run the compiled C code.
                         break :no_exec;
                     }
@@ -1098,7 +1098,6 @@ const builtin = @import("builtin");
 const std = @import("std");
 const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
-const getExternalExecutor = std.zig.system.getExternalExecutor;
 
 fn resolveTargetQuery(query: std.Target.Query) std.Build.ResolvedTarget {
     return .{

@@ -1026,16 +1026,23 @@ fn runCommand(
             }
 
             const root_target = exe.rootModuleTarget();
-            const need_cross_libc = exe.is_linking_libc and
-                (root_target.isGnuLibC() or (root_target.isMuslLibC() and exe.linkage == .dynamic));
-            const other_target = exe.root_module.resolved_target.?.result;
-            switch (std.zig.system.getExternalExecutor(b.graph.host.result, &other_target, .{
-                .qemu_fixes_dl = need_cross_libc and b.libc_runtimes_dir != null,
-                .link_libc = exe.is_linking_libc,
+            const dynamic_linker = root_target.dynamic_linker.get();
+            switch (try std.zig.system.getExternalExecutor(b.allocator, &b.graph.host.result, &root_target, .{
+                // This is the best indication we currently have of whether the executable needs a
+                // dynamic linker. A better approach would be to peek at the file on disk to see if
+                // it has a `DT_INTERP` entry.
+                .needs_dynamic_linker = dynamic_linker != null and (root_target.requiresLibC() or err == error.FileNotFound),
+                .libc_runtimes_dir = b.libc_runtimes_dir,
             })) {
                 .native, .rosetta => {
                     if (allow_skip) return error.MakeSkipped;
                     break :interpret;
+                },
+                .native_dl_sysroot => |dl_sysroot| {
+                    defer b.allocator.free(dl_sysroot);
+
+                    try interp_argv.append(b.fmt("{s}{s}", .{ dl_sysroot, dynamic_linker.? }));
+                    try interp_argv.appendSlice(argv);
                 },
                 .wine => |bin_name| {
                     if (b.enable_wine) {
@@ -1045,27 +1052,15 @@ fn runCommand(
                         return failForeign(run, "-fwine", argv[0], exe);
                     }
                 },
-                .qemu => |bin_name| {
-                    if (b.enable_qemu) {
-                        try interp_argv.append(bin_name);
+                .qemu => |qemu| {
+                    defer if (qemu.dl_sysroot) |dl_sysroot| b.allocator.free(dl_sysroot);
 
-                        if (need_cross_libc) {
-                            if (b.libc_runtimes_dir) |dir| {
-                                try interp_argv.append("-L");
-                                try interp_argv.append(b.pathJoin(&.{
-                                    dir,
-                                    try if (root_target.isGnuLibC()) std.zig.target.glibcRuntimeTriple(
-                                        b.allocator,
-                                        root_target.cpu.arch,
-                                        root_target.os.tag,
-                                        root_target.abi,
-                                    ) else if (root_target.isMuslLibC()) std.zig.target.muslRuntimeTriple(
-                                        b.allocator,
-                                        root_target.cpu.arch,
-                                        root_target.abi,
-                                    ) else unreachable,
-                                }));
-                            } else return failForeign(run, "--libc-runtimes", argv[0], exe);
+                    if (b.enable_qemu) {
+                        try interp_argv.append(qemu.bin_name);
+
+                        if (qemu.dl_sysroot) |dl_sysroot| {
+                            try interp_argv.append("-L");
+                            try interp_argv.append(b.dupe(dl_sysroot));
                         }
 
                         try interp_argv.appendSlice(argv);
