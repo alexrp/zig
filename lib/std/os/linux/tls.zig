@@ -201,6 +201,74 @@ const AreaDesc = struct {
 
 pub var area_desc: AreaDesc = undefined;
 
+pub fn getThreadPointer() usize {
+    @setRuntimeSafety(false);
+    @disableInstrumentation();
+
+    return switch (native_arch) {
+        .aarch64, .aarch64_be => asm (
+            \\ mrs %[ret], tpidr_el0
+            : [ret] "=r" (-> usize),
+        ),
+        .arc => asm (
+            \\ mov %[ret], r25
+            : [ret] "=r" (-> usize),
+        ),
+        .arm, .armeb, .thumb, .thumbeb => asm (
+            \\ mrc p15, 0, %[ret], c13, c0, 3
+            : [ret] "=r" (-> usize),
+        ),
+        .csky => asm (
+            \\ mov %[ret], r31
+            : [ret] "=r" (-> usize),
+        ),
+        .hexagon => asm (
+            \\ %[ret] = ugp
+            : [ret] "=r" (-> usize),
+        ),
+        .loongarch32, .loongarch64 => asm (
+            \\ move %[ret], $tp
+            : [ret] "=r" (-> usize),
+        ),
+        .m68k => linux.syscall1(.get_thread_area),
+        .mips, .mipsel, .mips64, .mips64el => asm (
+            \\ rdhwr %[ret], $29
+            : [ret] "=r" (-> usize),
+        ),
+        .riscv32, .riscv64 => asm (
+            \\ mv %[ret], tp
+            : [ret] "=r" (-> usize),
+        ),
+        .powerpc, .powerpcle => asm (
+            \\ mr %[ret], 2
+            : [ret] "=r" (-> usize),
+        ),
+        .powerpc64, .powerpc64le => asm (
+            \\ mr %[ret], 13
+            : [ret] "=r" (-> usize),
+        ),
+        .s390x => asm (
+            \\ ear %[ret], %%a0
+            \\ sllg %[ret], %[ret], 32
+            \\ ear %[ret], %%a1
+            : [ret] "=r" (-> usize),
+        ),
+        .sparc, .sparc64 => asm (
+            \\ mov %%g7, %[ret]
+            : [ret] "=r" (-> usize),
+        ),
+        .x86 => asm (
+            \\ movl %%gs, %[ret]
+            : [ret] "=r" (-> usize),
+        ),
+        .x86_64 => asm (
+            \\ mov %%fs, %[ret]
+            : [ret] "=r" (-> usize),
+        ),
+        else => @compileError("Unsupported architecture"),
+    };
+}
+
 pub fn setThreadPointer(addr: usize) void {
     @setRuntimeSafety(false);
     @disableInstrumentation();
