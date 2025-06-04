@@ -9,6 +9,7 @@
 //!
 //! [1] https://www.akkadia.org/drepper/tls.pdf
 
+const builtin = @import("builtin");
 const std = @import("std");
 const mem = std.mem;
 const elf = std.elf;
@@ -624,4 +625,37 @@ inline fn mmap_tls(length: usize) usize {
             0,
         });
     }
+}
+
+comptime {
+    // This is normally provided by libc. When libc is not linked, provide an implementation that
+    // works with our TLS code. But export it with weak linkage so that users can override it with
+    // their own in case they don't use our TLS code for whatever reason.
+    if (builtin.output_mode == .Exe and !builtin.link_libc) {
+        @export(&__tls_get_addr, .{ .name = "__tls_get_addr", .linkage = .weak });
+    }
+}
+
+const tls_mod_off_t = switch (native_arch) {
+    .x86_64 => u64, // Even for x32...
+    else => usize, // ... but not MIPS N32!
+};
+
+const TlsIndex = struct {
+    module: tls_mod_off_t,
+    offset: tls_mod_off_t,
+};
+
+fn __tls_get_addr(index: *TlsIndex) callconv(.c) [*]u8 {
+    const area = getThreadPointer() -% switch (current_variant) {
+        .I_original, .II => area_desc.abi_tcb.offset,
+        .I_modified => area_desc.block.offset +% current_tp_offset,
+    };
+    const dtv: *Dtv = @ptrFromInt(area + area_desc.dtv.offset);
+
+    // Deal with x32's weirdness of using `tls_mod_off_t = u64` despite `usize == u32`.
+    const offset: usize = @truncate(index.offset);
+
+    // See the comment on `Dtv` for why we ignore `index.module`.
+    return dtv.tls_block + offset;
 }
