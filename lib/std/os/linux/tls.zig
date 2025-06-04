@@ -47,7 +47,7 @@ const Variant = enum {
     /// -------------------------------------^-------------
     ///                                      `-- The TP register points here.
     ///
-    /// The offset (which can be zero) is applied to the TP only; there is never physical gap
+    /// The offset (which can be zero) is applied to the TP only; there is never a physical gap
     /// between the ABI TCB and the TLS blocks. This implies that we only need to align the TP.
     ///
     /// The first (and only) word in the ABI TCB points to the DTV.
@@ -206,6 +206,84 @@ pub fn setThreadPointer(addr: usize) void {
     @disableInstrumentation();
 
     switch (native_arch) {
+        .aarch64, .aarch64_be => {
+            asm volatile (
+                \\ msr tpidr_el0, %[addr]
+                :
+                : [addr] "r" (addr),
+            );
+        },
+        .arc => {
+            // We apparently need to both set r25 (TP) *and* inform the kernel...
+            asm volatile (
+                \\ mov r25, %[addr]
+                :
+                : [addr] "r" (addr),
+            );
+            const rc = @call(.always_inline, linux.syscall1, .{ .arc_settls, addr });
+            assert(rc == 0);
+        },
+        .arm, .armeb, .thumb, .thumbeb, .csky, .m68k, .mips, .mipsel, .mips64, .mips64el => {
+            const rc = @call(
+                .always_inline,
+                linux.syscall1,
+                .{ if (native_arch.isArm()) .set_tls else .set_thread_area, addr },
+            );
+            assert(rc == 0);
+        },
+        .hexagon => {
+            asm volatile (
+                \\ ugp = %[addr]
+                :
+                : [addr] "r" (addr),
+            );
+        },
+        .loongarch32, .loongarch64 => {
+            asm volatile (
+                \\ move $tp, %[addr]
+                :
+                : [addr] "r" (addr),
+            );
+        },
+        .powerpc, .powerpcle => {
+            asm volatile (
+                \\ mr 2, %[addr]
+                :
+                : [addr] "r" (addr),
+            );
+        },
+        .powerpc64, .powerpc64le => {
+            asm volatile (
+                \\ mr 13, %[addr]
+                :
+                : [addr] "r" (addr),
+            );
+        },
+        .riscv32, .riscv64 => {
+            asm volatile (
+                \\ mv tp, %[addr]
+                :
+                : [addr] "r" (addr),
+            );
+        },
+        .s390x => {
+            asm volatile (
+                \\ lgr %%r0, %[addr]
+                \\ sar %%a1, %%r0
+                \\ srlg %%r0, %%r0, 32
+                \\ sar %%a0, %%r0
+                :
+                : [addr] "r" (addr),
+                : "r0"
+            );
+        },
+        .sparc, .sparc64 => {
+            asm volatile (
+                \\ mov %[addr], %%g7
+                :
+                : [addr] "r" (addr),
+            );
+        },
         .x86 => {
             var user_desc: linux.user_desc = .{
                 .entry_number = area_desc.gdt_entry_number,
@@ -235,88 +313,6 @@ pub fn setThreadPointer(addr: usize) void {
         .x86_64 => {
             const rc = @call(.always_inline, linux.syscall2, .{ .arch_prctl, linux.ARCH.SET_FS, addr });
             assert(rc == 0);
-        },
-        .aarch64, .aarch64_be => {
-            asm volatile (
-                \\ msr tpidr_el0, %[addr]
-                :
-                : [addr] "r" (addr),
-            );
-        },
-        .arc => {
-            // We apparently need to both set r25 (TP) *and* inform the kernel...
-            asm volatile (
-                \\ mov r25, %[addr]
-                :
-                : [addr] "r" (addr),
-            );
-            const rc = @call(.always_inline, linux.syscall1, .{ .arc_settls, addr });
-            assert(rc == 0);
-        },
-        .arm, .armeb, .thumb, .thumbeb => {
-            const rc = @call(.always_inline, linux.syscall1, .{ .set_tls, addr });
-            assert(rc == 0);
-        },
-        .m68k => {
-            const rc = linux.syscall1(.set_thread_area, addr);
-            assert(rc == 0);
-        },
-        .hexagon => {
-            asm volatile (
-                \\ ugp = %[addr]
-                :
-                : [addr] "r" (addr),
-            );
-        },
-        .loongarch32, .loongarch64 => {
-            asm volatile (
-                \\ move $tp, %[addr]
-                :
-                : [addr] "r" (addr),
-            );
-        },
-        .riscv32, .riscv64 => {
-            asm volatile (
-                \\ mv tp, %[addr]
-                :
-                : [addr] "r" (addr),
-            );
-        },
-        .csky, .mips, .mipsel, .mips64, .mips64el => {
-            const rc = @call(.always_inline, linux.syscall1, .{ .set_thread_area, addr });
-            assert(rc == 0);
-        },
-        .powerpc, .powerpcle => {
-            asm volatile (
-                \\ mr 2, %[addr]
-                :
-                : [addr] "r" (addr),
-            );
-        },
-        .powerpc64, .powerpc64le => {
-            asm volatile (
-                \\ mr 13, %[addr]
-                :
-                : [addr] "r" (addr),
-            );
-        },
-        .s390x => {
-            asm volatile (
-                \\ lgr %%r0, %[addr]
-                \\ sar %%a1, %%r0
-                \\ srlg %%r0, %%r0, 32
-                \\ sar %%a0, %%r0
-                :
-                : [addr] "r" (addr),
-                : "r0"
-            );
-        },
-        .sparc, .sparc64 => {
-            asm volatile (
-                \\ mov %[addr], %%g7
-                :
-                : [addr] "r" (addr),
-            );
         },
         else => @compileError("Unsupported architecture"),
     }
